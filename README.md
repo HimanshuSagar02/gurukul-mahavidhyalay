@@ -55,3 +55,4 @@ npm run seed:admin
 - Placeholder visual assets are bundled only to support the first render before real media is uploaded.
 - In environments without SPA rewrite support, keep the frontend router in `hash` mode so page reloads do not break nested routes.
 "# gurukul-mahavidhyalay" 
+"# gurukul-mahavidhyalay" 
