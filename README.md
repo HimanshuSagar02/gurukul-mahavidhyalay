@@ -1,12 +1,6 @@
 # Gurukul Mahavidyalay Website
 
-Production-ready monorepo for a dynamic college website with:
-
-- React + Vite frontend
-- Node.js + Express backend
-- MongoDB content storage
-- Hidden admin panel with JWT cookie authentication
-- Dynamic admissions, notifications, gallery, contact info, and popup advertisement management
+Monorepo for the Gurukul Mahavidyalay website.
 
 ## Structure
 
@@ -54,6 +48,16 @@ npm run seed:admin
 - Gallery and popup uploads are stored in `backend/uploads`.
 - Placeholder visual assets are bundled only to support the first render before real media is uploaded.
 - In environments without SPA rewrite support, keep the frontend router in `hash` mode so page reloads do not break nested routes.
+
+## Render
+
+For a single Render web service:
+
+- Build command: `npm install && npm run build`
+- Start command: `npm start`
+- Frontend API URL: keep `VITE_API_URL=/api`
+- Frontend router mode: keep `VITE_ROUTER_MODE=hash`
+- Backend client URL: set `CLIENT_URL` to your Render site URL
 "# gurukul-mahavidhyalay" 
 "# gurukul-mahavidhyalay" 
 "# gurukul-mahavidhyalay" 
