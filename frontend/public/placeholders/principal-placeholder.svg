@@ -1,0 +1,8 @@
+<svg width="700" height="900" viewBox="0 0 700 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="700" height="900" fill="#EFE3D2"/>
+  <rect x="70" y="60" width="560" height="780" rx="18" fill="#F7F1E7" stroke="#CAB38B" stroke-width="4"/>
+  <circle cx="350" cy="280" r="110" fill="#D3B792"/>
+  <path d="M210 650C210 534.294 303.794 440.5 419.5 440.5H280.5C396.206 440.5 490 534.294 490 650V720H210V650Z" fill="#14353F"/>
+  <path d="M350 420C426.216 420 488 358.216 488 282C488 205.784 426.216 144 350 144C273.784 144 212 205.784 212 282C212 358.216 273.784 420 350 420Z" fill="#D8BE9F"/>
+  <text x="110" y="800" fill="#8A1C2B" font-size="36" font-family="Georgia, serif">Principal Image Placeholder</text>
+</svg>

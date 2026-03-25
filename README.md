@@ -57,3 +57,4 @@ npm run seed:admin
 "# gurukul-mahavidhyalay" 
 "# gurukul-mahavidhyalay" 
 "# gurukul-mahavidhyalay" 
+"# gurukul-mahavidhyalay" 
