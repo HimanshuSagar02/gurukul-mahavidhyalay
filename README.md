@@ -56,3 +56,4 @@ npm run seed:admin
 - In environments without SPA rewrite support, keep the frontend router in `hash` mode so page reloads do not break nested routes.
 "# gurukul-mahavidhyalay" 
 "# gurukul-mahavidhyalay" 
+"# gurukul-mahavidhyalay" 
