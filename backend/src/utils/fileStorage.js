@@ -78,7 +78,12 @@ export const deleteUploadedFile = async (fileUrl, cloudinaryPublicId = '') => {
       return;
     }
 
-    await deleteCloudinaryImage(publicId);
+    try {
+      await deleteCloudinaryImage(publicId);
+    } catch {
+      return;
+    }
+
     return;
   }
 
