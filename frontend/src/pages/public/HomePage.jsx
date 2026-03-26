@@ -1,15 +1,98 @@
 import { Link, useOutletContext } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { api, formatDate, resolveMediaUrl } from '../../api/client';
-import { EmptyState } from '../../components/EmptyState';
+import { useEffect, useMemo, useState } from 'react';
+import { api, formatDate, isPlaceholderMedia, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { SectionHeading } from '../../components/SectionHeading';
 import { AdvertisementPopup } from '../../components/public/AdvertisementPopup';
+
+const buildLeadershipCard = (eyebrow, title, designation, message, imageUrl) => {
+  const safeImageUrl = String(imageUrl || '/placeholders/principal-placeholder.svg').trim();
+  if (!title && !designation && !message && !safeImageUrl) {
+    return null;
+  }
+
+  return {
+    eyebrow,
+    title,
+    designation,
+    message,
+    imageUrl: safeImageUrl
+  };
+};
+
+const buildCount = (value) => String(Math.max(0, Number(value) || 0)).padStart(2, '0');
+
+const sanitizePhoneLink = (value = '') => value.replace(/[^\d+]/g, '');
+
+const defaultFacilityItems = [
+  {
+    title: 'Library',
+    badge: 'LB',
+    description: 'Quiet reading support with reference material, guided study time, and subject access for undergraduate learning.'
+  },
+  {
+    title: 'Labs',
+    badge: 'LM',
+    description: 'Practical learning spaces that support subject work, demonstrations, and everyday academic preparation.'
+  },
+  {
+    title: 'Hostel Support',
+    badge: 'HS',
+    description: 'Student support services focused on comfort, discipline, and a dependable study environment when needed.'
+  },
+  {
+    title: 'Sports',
+    badge: 'SP',
+    description: 'Physical activity, recreation, and participation-focused campus culture to support confidence and wellbeing.'
+  }
+];
+
+const defaultAdmissionSteps = [
+  {
+    step: '01',
+    title: 'Submit Application',
+    description: 'Complete the admission form with personal details, marks, subjects, and contact information.'
+  },
+  {
+    step: '02',
+    title: 'Document Review',
+    description: 'The college team reviews eligibility, submitted records, and the selected academic combination.'
+  },
+  {
+    step: '03',
+    title: 'Confirmation',
+    description: 'Applicants receive guidance for the next step, including verification, contact, and admission communication.'
+  },
+  {
+    step: '04',
+    title: 'Start the Session',
+    description: 'Once confirmed, students can follow notices, academic updates, and the beginning of the programme cycle.'
+  }
+];
+
+const defaultTestimonials = [
+  {
+    name: 'Student Voice',
+    role: 'Undergraduate Student',
+    quote: 'The admission process is simple to follow and the college communication remains clear and dependable.'
+  },
+  {
+    name: 'Parent Feedback',
+    role: 'College Community',
+    quote: 'Important updates, academic guidance, and contact details are easy to understand and access.'
+  },
+  {
+    name: 'Alumni Perspective',
+    role: 'Graduate',
+    quote: 'A disciplined environment and consistent guidance help students move forward with confidence.'
+  }
+];
 
 export const HomePage = () => {
   const { site: sharedSite } = useOutletContext();
   const [data, setData] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [activeManagementSlide, setActiveManagementSlide] = useState(0);
 
   useEffect(() => {
     const loadHome = async () => {
@@ -21,13 +104,96 @@ export const HomePage = () => {
   }, []);
 
   const site = data?.site || sharedSite;
-  const slides = site?.hero?.slides || [];
-  const socialLinks = [
-    { label: 'Facebook', url: site?.socialLinks?.facebook },
-    { label: 'Instagram', url: site?.socialLinks?.instagram },
-    { label: 'YouTube', url: site?.socialLinks?.youtube },
-    { label: 'WhatsApp', url: site?.socialLinks?.whatsapp }
-  ].filter((item) => item.url);
+  const homeData = data || { site, courses: [], notifications: [], gallery: [], popup: null };
+  const slides = useMemo(() => {
+    const siteSlides = site?.hero?.slides || [];
+    return siteSlides.length ? siteSlides : [{ title: site?.collegeName || 'Gurukul Mahavidhyalya', subtitle: '', image: '' }];
+  }, [site]);
+  const courses = homeData.courses || [];
+  const featuredCourse = courses[0] || null;
+  const coursesPreview = courses.slice(0, 3);
+  const notifications = homeData.notifications || [];
+  const announcementItems = notifications.length
+    ? notifications.slice(0, 3)
+    : site?.announcementTicker
+      ? [
+          {
+            _id: 'announcement-ticker',
+            title: 'Latest Notice',
+            description: site.announcementTicker,
+            category: 'Announcement',
+            publishedAt: new Date().toISOString()
+          }
+        ]
+      : [];
+  const gallery = homeData.gallery || [];
+  const galleryPreview = gallery.length
+    ? gallery.slice(0, 4)
+    : slides
+        .filter((slide) => slide.image && !isPlaceholderMedia(slide.image))
+        .slice(0, 4)
+        .map((slide, index) => ({
+          _id: `hero-slide-${index}`,
+          imageUrl: slide.image,
+          category: 'Campus',
+          caption: slide.title,
+          photoOf: slide.subtitle
+        }));
+  const managementProfiles = [...(site?.about?.managementProfiles || [])]
+    .filter((profile) => {
+      const hasImage = profile?.imageUrl && !isPlaceholderMedia(profile.imageUrl);
+      return profile?.name || profile?.work || profile?.experience || hasImage;
+    })
+    .sort((first, second) => Number(first.displayOrder || 0) - Number(second.displayOrder || 0));
+  const leadershipCards = [
+    buildLeadershipCard(
+      'From the Principal',
+      site?.about?.principalName || 'Principal',
+      site?.about?.principalDesignation,
+      site?.about?.principalMessage,
+      site?.about?.principalImage
+    ),
+    buildLeadershipCard(
+      'From the Chief Executive Officer',
+      site?.about?.ceoName || 'Chief Executive Officer',
+      site?.about?.ceoDesignation,
+      site?.about?.ceoMessage,
+      site?.about?.ceoImage
+    )
+  ].filter(Boolean);
+  const contactItems = [
+    site?.contact?.address ? { label: 'Address', value: site.contact.address } : null,
+    site?.contact?.phone
+      ? { label: 'Phone', value: site.contact.phone, href: `tel:${sanitizePhoneLink(site.contact.phone)}` }
+      : null,
+    site?.contact?.email ? { label: 'Email', value: site.contact.email, href: `mailto:${site.contact.email}` } : null
+  ].filter(Boolean);
+  const facilities = site?.homepage?.facilities?.length ? site.homepage.facilities : defaultFacilityItems;
+  const admissionSteps = site?.homepage?.admissionSteps?.length ? site.homepage.admissionSteps : defaultAdmissionSteps;
+  const testimonials = site?.homepage?.testimonials?.length ? site.homepage.testimonials : defaultTestimonials;
+
+  const campusHighlights = [
+    {
+      value: buildCount(courses.length),
+      label: 'Programmes',
+      detail: 'Core undergraduate learning options presented clearly for applicants and families.'
+    },
+    {
+      value: buildCount(announcementItems.length),
+      label: 'Announcements',
+      detail: 'Admission, examination, and event communication remains visible on the public site.'
+    },
+    {
+      value: buildCount(galleryPreview.length),
+      label: 'Campus Glimpses',
+      detail: 'A visual record of campus life, academic activity, and institutional moments.'
+    },
+    {
+      value: buildCount(contactItems.length),
+      label: 'Support Channels',
+      detail: 'Direct contact routes for admission queries, calls, and official communication.'
+    }
+  ];
 
   useEffect(() => {
     if (slides.length <= 1) {
@@ -41,293 +207,480 @@ export const HomePage = () => {
     return () => window.clearInterval(interval);
   }, [slides.length]);
 
-  if (!site || !data) {
-    return <LoadingScreen label="Please wait..." />;
+  useEffect(() => {
+    if (managementProfiles.length <= 1) {
+      setActiveManagementSlide(0);
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setActiveManagementSlide((current) => (current + 1) % managementProfiles.length);
+    }, 4800);
+
+    return () => window.clearInterval(interval);
+  }, [managementProfiles.length]);
+
+  useEffect(() => {
+    if (activeManagementSlide >= managementProfiles.length) {
+      setActiveManagementSlide(0);
+    }
+  }, [activeManagementSlide, managementProfiles.length]);
+
+  if (!site) {
+    return <LoadingScreen />;
   }
+
+  const hasAboutPanels = Boolean(site.about?.mission || site.about?.vision);
+  const hasContactMap = Boolean(site.contact?.mapEmbedUrl);
 
   return (
     <>
-      <AdvertisementPopup popup={data.popup} />
+      <AdvertisementPopup popup={homeData.popup} />
 
-      <section className="hero">
+      <section className="hero hero--homepage">
         <div className="hero__media">
-          {slides.map((slide, index) => (
-            <div
-              key={`${slide.title}-${slide.image}`}
-              className={`hero__slide ${index === activeSlide ? 'hero__slide--active' : ''}`}
-              style={{ backgroundImage: `url(${resolveMediaUrl(slide.image)})` }}
-            />
-          ))}
+          {slides.map((slide, index) => {
+            const hasRealImage = slide.image && !isPlaceholderMedia(slide.image);
+            return (
+              <div
+                key={`${slide.title}-${slide.image || index}`}
+                className={`hero__slide ${index === activeSlide ? 'hero__slide--active' : ''} ${hasRealImage ? '' : 'hero__slide--fallback'}`.trim()}
+                style={hasRealImage ? { backgroundImage: `url(${resolveMediaUrl(slide.image)})` } : undefined}
+              />
+            );
+          })}
           <div className="hero__overlay" />
         </div>
 
         <div className="container hero__content">
           <div className="hero__copy">
-            <span className="hero__eyebrow">{site.hero.bannerNote}</span>
-            <h1>{site.collegeName}</h1>
-            <p className="hero__subtitle">{site.affiliation}</p>
-            <p>{site.hero.headline}</p>
-            <p>{site.hero.subheadline}</p>
+            <div className="hero__identity">
+              <div className="hero__logo-shell">
+                <img
+                  src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
+                  alt={`${site.collegeName} logo`}
+                  className="hero__logo"
+                  decoding="async"
+                />
+              </div>
+              <div>
+                {site.hero?.bannerNote ? <span className="hero__eyebrow">{site.hero.bannerNote}</span> : null}
+                <h1>{site.collegeName}</h1>
+                {site.affiliation ? <p className="hero__subtitle">{site.affiliation}</p> : null}
+              </div>
+            </div>
+
+            {site.hero?.headline ? <p className="hero__lead">{site.hero.headline}</p> : null}
+            {site.hero?.subheadline ? <p>{site.hero.subheadline}</p> : null}
 
             <div className="hero__actions">
               <Link to="/admissions" className="button">
-                {site.hero.primaryCtaLabel}
+                {site.hero?.primaryCtaLabel || 'Apply Now'}
               </Link>
-              <Link to="/courses" className="button button--secondary">
-                {site.hero.secondaryCtaLabel}
+              <Link to="/notifications" className="button button--secondary">
+                {site.hero?.secondaryCtaLabel || 'Admissions Open'}
               </Link>
+              <Link to="/contact" className="button button--ghost">
+                {site.hero?.tertiaryCtaLabel || 'Contact Us'}
+              </Link>
+            </div>
+
+            <div className="hero__info-grid">
+              {site.location ? (
+                <div className="hero__info-card">
+                  <span>Location</span>
+                  <strong>{site.location}</strong>
+                </div>
+              ) : null}
+              {featuredCourse?.duration ? (
+                <div className="hero__info-card">
+                  <span>Programme</span>
+                  <strong>{featuredCourse.duration}</strong>
+                </div>
+              ) : null}
+              <div className="hero__info-card">
+                <span>Updates</span>
+                <strong>{announcementItems.length ? `${buildCount(announcementItems.length)} Latest Notices` : 'Admissions Guidance'}</strong>
+              </div>
             </div>
           </div>
 
-          <aside className="hero__panel">
-            <span className="hero__panel-label">At a Glance</span>
-            <h2>Bachelor of Arts</h2>
-            <ul>
-              <li>Location: {site.location}</li>
-              <li>Popular subjects: English, Hindi, Drawing, Home Science, Sociology</li>
-              <li>Affiliation: {site.affiliation}</li>
-            </ul>
+          <aside className="hero__panel hero__panel--homepage">
+            <span className="hero__panel-label">Quick Overview</span>
+            <h2>{featuredCourse?.title || 'Undergraduate Learning'}</h2>
+            <p>
+              {site.about?.introduction ||
+                'A disciplined and student-focused academic environment designed for clear communication, accessible admissions, and dependable guidance.'}
+            </p>
+            <div className="hero__panel-points">
+              {site.location ? <div>Regional presence rooted in {site.location}</div> : null}
+              {site.affiliation ? <div>{site.affiliation}</div> : null}
+              {featuredCourse?.subjects?.length ? <div>{featuredCourse.subjects.slice(0, 4).join(', ')}</div> : null}
+            </div>
           </aside>
         </div>
-
-        <div className="hero__ticker">
-          <div className="container hero__ticker-inner">
-            <span>Highlights</span>
-            <p>{site.announcementTicker}</p>
-          </div>
-        </div>
       </section>
 
-      <section className="section section--muted">
-        <div className="container identity-grid">
-          <article className="identity-card">
-            <SectionHeading
-              eyebrow="Our Identity"
-              title={site.branding?.managementLogoTitle || 'Management Logo'}
-              description={site.affiliation}
-            />
-            {site.branding?.managementLogoUrl ? (
-              <div className="identity-card__logo">
-                <img
-                  src={resolveMediaUrl(site.branding.managementLogoUrl)}
-                  alt={site.branding.managementLogoTitle || 'Management logo'}
-                />
-              </div>
-            ) : (
-              <p className="identity-card__copy">
-                The management emblem will appear here soon.
-              </p>
-            )}
-          </article>
-
-          <article className="identity-card">
-            <SectionHeading
-              eyebrow="Stay Connected"
-              title="Social Links"
-              description="Follow our latest updates and campus moments."
-            />
-            {socialLinks.length ? (
-              <div className="social-link-list">
-                {socialLinks.map((link) => (
-                  <a key={link.label} href={link.url} target="_blank" rel="noreferrer" className="social-link-chip">
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <p className="identity-card__copy">
-                Our social links will be shared here soon.
-              </p>
-            )}
-          </article>
-        </div>
-      </section>
-
-      <section className="section section--warm">
-        <div className="container panel-grid">
-          <article className="content-panel">
-            <div className="content-panel__header">
-              <h3>Latest Updates</h3>
-            </div>
-            <div className="content-panel__body">
-              {data.notifications.length ? (
-                data.notifications.map((notice) => (
-                  <div key={notice._id} className="notice-row">
-                    <div className="notice-row__date">{formatDate(notice.publishedAt)}</div>
-                    <div>
-                      <strong>{notice.title}</strong>
-                      <p>{notice.description || 'More details will be shared soon.'}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <EmptyState
-                  title="No updates right now"
-                  description="Fresh updates will appear here soon."
-                />
-              )}
-              <Link to="/notifications" className="text-link">
-                View all updates
-              </Link>
-            </div>
-          </article>
-
-          <article className="content-panel">
-            <div className="content-panel__header">
-              <h3>About Us</h3>
-            </div>
-            <div className="content-panel__body">
-              <p>{site.about.introduction}</p>
-              <div className="mini-copy-block">
-                <strong>Mission</strong>
-                <p>{site.about.mission}</p>
-              </div>
-              <Link to="/about" className="text-link">
-                Read more
-              </Link>
-            </div>
-          </article>
-
-          <article className="content-panel">
-            <div className="content-panel__header">
-              <h3>Featured Course</h3>
-            </div>
-            <div className="content-panel__body">
-              {data.courses.map((course) => (
-                <div key={course._id}>
-                  <strong>{course.title}</strong>
-                  <p>{course.overview}</p>
-                  <ul className="subject-list">
-                    {course.subjects.map((subject) => (
-                      <li key={subject}>{subject}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              <Link to="/courses" className="text-link">
-                View course details
-              </Link>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <div className="feature-split">
-            <div className="feature-split__image-wrap">
-              <img
-                src={resolveMediaUrl(site.about.principalImage)}
-                alt={site.about.principalName || 'Principal'}
-                className="feature-split__image"
-              />
-            </div>
-            <div className="feature-split__content">
-              <SectionHeading
-                eyebrow="From the Principal"
-                title={site.about.principalName || 'Principal'}
-                description={site.about.principalDesignation}
-              />
-              <p className="lead-copy">{site.about.principalMessage}</p>
-              <div className="dual-copy">
-                <div>
-                  <h3>Mission</h3>
-                  <p>{site.about.mission}</p>
-                </div>
-                <div>
-                  <h3>Vision</h3>
-                  <p>{site.about.vision}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {site.motivation?.enabled ? (
+      {announcementItems.length ? (
         <section className="section">
-          <div className="container motivation-panel">
-            {site.motivation?.imageUrl ? (
-              <div className="motivation-panel__image">
-                <img src={resolveMediaUrl(site.motivation.imageUrl)} alt={site.motivation.title || 'Motivation'} />
-              </div>
-            ) : null}
-            <div className="motivation-panel__content">
-              <SectionHeading
-                eyebrow="A Word of Encouragement"
-                title={site.motivation?.title || 'Student Motivation'}
-                description="A few words to inspire every learner."
-              />
-              <p className="lead-copy">{site.motivation?.text}</p>
+          <div className="container">
+            <SectionHeading
+              eyebrow="Announcements"
+              title="Latest Updates"
+              description="Admissions, examination notices, and campus-related updates stay available in one clear section."
+            />
+
+            <div className="announcement-grid">
+              {announcementItems.map((notice) => (
+                <article key={notice._id} className="announcement-card">
+                  <div className="announcement-card__meta">
+                    <span>{notice.category || 'Update'}</span>
+                    <strong>{formatDate(notice.publishedAt)}</strong>
+                  </div>
+                  <h3>{notice.title}</h3>
+                  {notice.description ? <p>{notice.description}</p> : null}
+                </article>
+              ))}
+            </div>
+
+            <div className="section__actions">
+              <Link to="/notifications" className="button button--secondary">
+                View All Updates
+              </Link>
             </div>
           </div>
         </section>
       ) : null}
 
-      <section className="section section--muted">
+      {(site.about?.introduction || site.about?.mission || site.about?.vision) ? (
+        <section className="section section--muted">
+          <div className={`container about-home ${hasAboutPanels ? '' : 'about-home--single'}`.trim()}>
+            <div className="about-home__content">
+              <SectionHeading
+                eyebrow="About College"
+                title={site.collegeName}
+                description={site.affiliation || 'A clean and focused undergraduate college experience.'}
+              />
+              {site.about?.introduction ? <p className="lead-copy">{site.about.introduction}</p> : null}
+              <div className="section__actions">
+                <Link to="/about" className="button button--secondary">
+                  Read More
+                </Link>
+              </div>
+            </div>
+
+            {hasAboutPanels ? (
+              <div className="about-home__panels">
+                {site.about?.mission ? (
+                  <article className="about-home__panel">
+                    <span>Mission</span>
+                    <p>{site.about.mission}</p>
+                  </article>
+                ) : null}
+                {site.about?.vision ? (
+                  <article className="about-home__panel">
+                    <span>Vision</span>
+                    <p>{site.about.vision}</p>
+                  </article>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {coursesPreview.length ? (
+        <section className="section">
+          <div className="container">
+            <SectionHeading
+              eyebrow="Courses"
+              title="Programmes Offered"
+              description="Core academic options are presented with eligibility, duration, and subject direction."
+            />
+
+            <div className="course-preview-grid">
+              {coursesPreview.map((course) => (
+                <article key={course._id} className="course-preview-card">
+                  <div className="course-preview-card__meta">
+                    {course.duration ? <span>{course.duration}</span> : <span>Undergraduate Programme</span>}
+                    {course.eligibility ? <strong>{course.eligibility}</strong> : null}
+                  </div>
+                  <h3>{course.title}</h3>
+                  {course.overview ? <p>{course.overview}</p> : null}
+                  {course.subjects?.length ? (
+                    <ul className="subject-list subject-list--wide">
+                      {course.subjects.slice(0, 5).map((subject) => (
+                        <li key={subject}>{subject}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+
+            <div className="section__actions">
+              <Link to="/courses" className="button button--secondary">
+                View All Courses
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="section section--warm">
         <div className="container">
           <SectionHeading
-            eyebrow="Gallery"
-            title="Campus life and special moments"
-            description="A quick look at memorable moments from college life."
+            eyebrow="Highlights"
+            title="Campus Highlights"
+            description="Essential numbers and college-facing indicators remain simple, readable, and easy to scan."
           />
 
-          {data.gallery.length ? (
-            <div className="gallery-preview">
-              {data.gallery.slice(0, 3).map((item) => (
-                <article key={item._id} className="gallery-preview__item">
-                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.caption || 'Gallery item'} />
-                  <div className="gallery-preview__caption">
-                    {item.category ? <span className="gallery-card__eyebrow">{item.category}</span> : null}
-                    <strong>{item.caption || 'College gallery update'}</strong>
-                    {item.photoOf ? <p className="gallery-card__detail">Featuring: {item.photoOf}</p> : null}
+          <div className="metric-grid">
+            {campusHighlights.map((item) => (
+              <article key={item.label} className="metric-card">
+                <strong>{item.value}</strong>
+                <h3>{item.label}</h3>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {leadershipCards.length ? (
+        <section className="section">
+          <div className="container">
+            <SectionHeading
+              eyebrow="Academic Leadership"
+              title="Principal and Chief Executive Officer"
+              description="Senior leadership remains visible in a static section for quick reference and institutional trust."
+            />
+
+            <div className={`leadership-spotlights ${leadershipCards.length === 1 ? 'leadership-spotlights--single' : ''}`.trim()}>
+              {leadershipCards.map((card) => (
+                <article
+                  key={card.eyebrow}
+                  className={`leadership-spotlight ${card.imageUrl ? '' : 'leadership-spotlight--textOnly'}`.trim()}
+                >
+                  {card.imageUrl ? (
+                    <div className="leadership-spotlight__media">
+                      <img
+                        src={resolveMediaUrl(card.imageUrl)}
+                        alt={card.title}
+                        className="leadership-spotlight__image"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="leadership-spotlight__content">
+                    <span className="section-heading__eyebrow">{card.eyebrow}</span>
+                    <h3>{card.title}</h3>
+                    {card.designation ? <p className="leadership-spotlight__designation">{card.designation}</p> : null}
+                    {card.message ? <p className="lead-copy">{card.message}</p> : null}
                   </div>
                 </article>
               ))}
             </div>
-          ) : (
-            <EmptyState
-              title="More moments coming soon"
-              description="Please visit again to see the latest highlights."
-            />
-          )}
+          </div>
+        </section>
+      ) : null}
 
-          <div className="section__actions">
-            <Link to="/gallery" className="button button--secondary">
-              View gallery
-            </Link>
+      {managementProfiles.length ? (
+        <section className="section section--muted">
+          <div className="container">
+            <SectionHeading
+              eyebrow="Management Staff"
+              title="Management Team Profiles"
+              description="Additional management profiles appear in a dedicated slider separate from the Principal and CEO."
+            />
+
+            <div className="leadership-carousel">
+              <div
+                className="leadership-carousel__track"
+                style={{ transform: `translateX(-${activeManagementSlide * 100}%)` }}
+              >
+                {managementProfiles.map((profile) => {
+                  const profileImage = profile.imageUrl && !isPlaceholderMedia(profile.imageUrl) ? profile.imageUrl : '';
+                  return (
+                    <article
+                      key={profile.id}
+                      className={`leadership-carousel__slide ${profileImage ? '' : 'leadership-carousel__slide--textOnly'}`.trim()}
+                    >
+                      {profileImage ? (
+                        <div className="leadership-carousel__media">
+                          <img
+                            src={resolveMediaUrl(profileImage)}
+                            alt={profile.name || 'Management profile'}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="leadership-carousel__content">
+                        <span className="section-heading__eyebrow">Management Team</span>
+                        <h3>{profile.name || 'Management Member'}</h3>
+                        {profile.work ? <p className="leadership-spotlight__designation">{profile.work}</p> : null}
+                        {profile.experience ? <p className="lead-copy">{profile.experience}</p> : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+
+            {managementProfiles.length > 1 ? (
+              <div className="leadership-carousel__controls">
+                {managementProfiles.map((profile, index) => (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    className={index === activeManagementSlide ? 'is-active' : ''}
+                    aria-label={`Show profile ${index + 1}`}
+                    onClick={() => setActiveManagementSlide(index)}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="section">
+        <div className="container">
+          <SectionHeading
+            eyebrow="Facilities"
+            title="Campus Facilities"
+            description="Essential student-facing facilities are presented with minimal and readable supporting information."
+          />
+
+          <div className="facility-grid">
+            {facilities.map((item, index) => (
+              <article key={item.title} className="facility-card">
+                <div className="facility-card__badge">{item.badge || String(index + 1).padStart(2, '0')}</div>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {galleryPreview.length ? (
+        <section className="section section--muted">
+          <div className="container">
+            <SectionHeading
+              eyebrow="Gallery"
+              title="Campus Life"
+              description="Images from campus activity, academic engagement, and important institutional moments."
+            />
+
+            <div className="gallery-preview gallery-preview--expanded">
+              {galleryPreview.map((item) => (
+                <article key={item._id} className="gallery-preview__item">
+                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.caption || 'Campus gallery item'} loading="lazy" decoding="async" />
+                  {(item.category || item.caption || item.photoOf) ? (
+                    <div className="gallery-preview__caption">
+                      {item.category ? <span className="gallery-card__eyebrow">{item.category}</span> : null}
+                      {item.caption ? <strong>{item.caption}</strong> : null}
+                      {item.photoOf ? <p className="gallery-card__detail">{item.photoOf}</p> : null}
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+
+            <div className="section__actions">
+              <Link to="/gallery" className="button button--secondary">
+                View Full Gallery
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="section section--warm">
+        <div className="container">
+          <SectionHeading
+            eyebrow="Admissions"
+            title="Admission Process"
+            description="A simple step-by-step view helps students and families understand how to begin."
+          />
+
+          <div className="process-grid">
+            {admissionSteps.map((item, index) => (
+              <article key={`${item.title}-${index}`} className="process-step">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="section">
-        <div className="container contact-strip">
-          <div>
-            <SectionHeading
-              eyebrow="Contact"
-              title="Need help with admissions or college details?"
-              description={site.contact.inquiryText}
-            />
+        <div className="container">
+          <SectionHeading
+            eyebrow="Testimonials"
+            title="Student and Alumni Voices"
+            description="Selected testimonials can be managed from the admin panel and displayed in a clean public format."
+          />
+
+          <div className="experience-grid">
+            {testimonials.map((item, index) => (
+              <article key={`${item.name}-${index}`} className="experience-card">
+                <span>{item.role || 'Student Voice'}</span>
+                <h3>{item.name || 'College Community'}</h3>
+                <p>{item.quote}</p>
+              </article>
+            ))}
           </div>
-          <div className="contact-strip__details">
-            <div>
-              <span>Address</span>
-              <strong>{site.contact.address}</strong>
-            </div>
-            <div>
-              <span>Phone</span>
-              <strong>{site.contact.phone || 'Coming soon'}</strong>
-            </div>
-            <div>
-              <span>Email</span>
-              <strong>{site.contact.email || 'Coming soon'}</strong>
-            </div>
-          </div>
-          <Link to="/contact" className="button">
-            Contact Us
-          </Link>
         </div>
       </section>
+
+      {contactItems.length || site.contact?.mapEmbedUrl ? (
+        <section className="section section--muted">
+          <div className={`container contact-home ${hasContactMap ? '' : 'contact-home--single'}`.trim()}>
+            <div className="contact-home__content">
+              <SectionHeading
+                eyebrow="Contact"
+                title="Contact and Campus Location"
+                description={site.contact?.inquiryText || 'Reach the college for admissions, support, and general communication.'}
+              />
+
+              <div className="contact-home__cards">
+                {contactItems.map((item) => (
+                  <article key={item.label} className="contact-home__card">
+                    <span>{item.label}</span>
+                    {item.href ? <a href={item.href}>{item.value}</a> : <strong>{item.value}</strong>}
+                  </article>
+                ))}
+              </div>
+
+              <div className="button-row">
+                <Link to="/contact" className="button">
+                  Contact Details
+                </Link>
+                <Link to="/admissions" className="button button--secondary">
+                  Admission Inquiry
+                </Link>
+              </div>
+            </div>
+
+            {hasContactMap ? (
+              <div className="contact-home__map">
+                <iframe
+                  src={site.contact.mapEmbedUrl}
+                  title={`${site.collegeName} location`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 };

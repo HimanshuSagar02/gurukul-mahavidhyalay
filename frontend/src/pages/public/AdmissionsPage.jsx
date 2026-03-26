@@ -8,6 +8,7 @@ const initialForm = {
   name: '',
   fatherName: '',
   mobileNumber: '',
+  email: '',
   aadhaarNumber: '',
   marksPercentage: '',
   selectedSubjects: [],
@@ -29,10 +30,11 @@ export const AdmissionsPage = () => {
   }, []);
 
   if (!courses) {
-    return <LoadingScreen label="Please wait..." />;
+    return <LoadingScreen />;
   }
 
-  const subjects = courses[0]?.subjects || [];
+  const featuredCourse = courses[0] || null;
+  const subjects = featuredCourse?.subjects || [];
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -63,44 +65,67 @@ export const AdmissionsPage = () => {
 
   return (
     <>
-      <PageBanner
-        title="Apply for Admission"
-        subtitle="Share your details to begin the admission process."
-      />
+      <PageBanner title="Apply for Admission" subtitle="Submit your details to begin the admission process." />
 
       <section className="section">
         <div className="container admission-layout">
           <div>
-            <SectionHeading
-              eyebrow="How to Apply"
-              title="Application Details"
-              description="Complete the form below and we will review your request."
-            />
-            <div className="content-block">
-              <h3>Course</h3>
-              <p>{courses[0]?.title}</p>
-              <h3>Eligibility</h3>
-              <p>{courses[0]?.eligibility}</p>
-            </div>
+            <SectionHeading eyebrow="Admissions" title="Application details" description="Complete the form and the college team will review your request." />
+            {featuredCourse ? (
+              <div className="content-block">
+                <h3>{featuredCourse.title}</h3>
+                {featuredCourse.eligibility ? <p>{featuredCourse.eligibility}</p> : null}
+                {featuredCourse.duration ? <p>{featuredCourse.duration}</p> : null}
+              </div>
+            ) : null}
           </div>
 
           <form className="admin-card form-card" onSubmit={handleSubmit}>
             <div className="form-grid">
               <label>
                 <span>Name</span>
-                <input name="name" value={form.name} onChange={handleChange} required />
+                <input name="name" value={form.name} autoComplete="name" onChange={handleChange} required />
               </label>
               <label>
                 <span>Father's Name</span>
-                <input name="fatherName" value={form.fatherName} onChange={handleChange} required />
+                <input name="fatherName" value={form.fatherName} autoComplete="off" onChange={handleChange} required />
               </label>
               <label>
                 <span>Mobile Number</span>
-                <input name="mobileNumber" value={form.mobileNumber} onChange={handleChange} required maxLength={10} />
+                <input
+                  name="mobileNumber"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  pattern="\d{10}"
+                  value={form.mobileNumber}
+                  onChange={handleChange}
+                  required
+                  maxLength={10}
+                />
+              </label>
+              <label>
+                <span>Gmail / Email Address</span>
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
               </label>
               <label>
                 <span>Aadhaar Number</span>
-                <input name="aadhaarNumber" value={form.aadhaarNumber} onChange={handleChange} required maxLength={12} />
+                <input
+                  name="aadhaarNumber"
+                  inputMode="numeric"
+                  pattern="\d{12}"
+                  value={form.aadhaarNumber}
+                  onChange={handleChange}
+                  required
+                  maxLength={12}
+                />
               </label>
               <label>
                 <span>Class 12 Marks / Percentage</span>
@@ -112,27 +137,29 @@ export const AdmissionsPage = () => {
               </label>
             </div>
 
-            <div className="checkbox-group">
-              <span>Choose Subjects</span>
-              <div className="checkbox-group__grid">
-                {subjects.map((subject) => (
-                  <label key={subject} className="checkbox-item">
-                    <input
-                      type="checkbox"
-                      checked={form.selectedSubjects.includes(subject)}
-                      onChange={() => handleSubjectToggle(subject)}
-                    />
-                    <span>{subject}</span>
-                  </label>
-                ))}
+            {subjects.length ? (
+              <div className="checkbox-group">
+                <span>Preferred Subjects</span>
+                <div className="checkbox-group__grid">
+                  {subjects.map((subject) => (
+                    <label key={subject} className="checkbox-item">
+                      <input
+                        type="checkbox"
+                        checked={form.selectedSubjects.includes(subject)}
+                        onChange={() => handleSubjectToggle(subject)}
+                      />
+                      <span>{subject}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {status.error ? <p className="form-message form-message--error">{status.error}</p> : null}
             {status.success ? <p className="form-message form-message--success">{status.success}</p> : null}
 
             <button type="submit" className="button" disabled={status.submitting}>
-              {status.submitting ? 'Sending...' : 'Send Application'}
+              {status.submitting ? 'Submitting...' : 'Submit Application'}
             </button>
           </form>
         </div>

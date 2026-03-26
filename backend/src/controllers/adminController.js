@@ -35,16 +35,124 @@ const siteMediaFieldMap = {
     urlPath: 'branding.websiteLogoUrl',
     publicIdPath: 'branding.websiteLogoPublicId'
   },
-  managementLogo: {
-    folderName: 'site-branding',
-    urlPath: 'branding.managementLogoUrl',
-    publicIdPath: 'branding.managementLogoPublicId'
-  },
   motivationImage: {
     folderName: 'site-motivation',
     urlPath: 'motivation.imageUrl',
     publicIdPath: 'motivation.imagePublicId'
+  },
+  principalImage: {
+    folderName: 'leadership',
+    urlPath: 'about.principalImage',
+    publicIdPath: 'about.principalImagePublicId'
+  },
+  ceoImage: {
+    folderName: 'leadership',
+    urlPath: 'about.ceoImage',
+    publicIdPath: 'about.ceoImagePublicId'
   }
+};
+
+const normalizeHeroSlides = (slides = [], currentSlides = []) =>
+  slides.map((slide, index) => ({
+    title: String(slide?.title || '').trim(),
+    subtitle: String(slide?.subtitle || '').trim(),
+    image: String(slide?.image ?? currentSlides[index]?.image ?? '').trim(),
+    imagePublicId: String(slide?.imagePublicId ?? currentSlides[index]?.imagePublicId ?? '').trim()
+  }));
+
+const normalizeFeatureList = (items = []) =>
+  items
+    .filter((item) => item && (item.title || item.description || item.badge))
+    .map((item) => ({
+      title: String(item.title || '').trim(),
+      description: String(item.description || '').trim(),
+      badge: String(item.badge || '').trim().slice(0, 4)
+    }));
+
+const normalizeTestimonials = (items = []) =>
+  items
+    .filter((item) => item && (item.name || item.role || item.quote))
+    .map((item) => ({
+      name: String(item.name || '').trim(),
+      role: String(item.role || '').trim(),
+      quote: String(item.quote || '').trim()
+    }));
+
+const normalizeManagementProfiles = (profiles = [], currentProfiles = []) => {
+  const currentProfilesById = new Map(
+    currentProfiles
+      .filter((profile) => profile?.id)
+      .map((profile) => [profile.id, profile])
+  );
+
+  return profiles
+    .filter((profile) => profile && profile.id)
+    .map((profile, index) => {
+      const currentProfile = currentProfilesById.get(profile.id) || {};
+      return {
+        id: String(profile.id).trim(),
+        name: String(profile.name || '').trim(),
+        work: String(profile.work ?? profile.designation ?? '').trim(),
+        experience: String(profile.experience ?? profile.message ?? '').trim(),
+        imageUrl: String(profile.imageUrl ?? currentProfile.imageUrl ?? '').trim(),
+        imagePublicId: String(profile.imagePublicId ?? currentProfile.imagePublicId ?? '').trim(),
+        displayOrder: Number.isFinite(Number(profile.displayOrder)) ? Number(profile.displayOrder) : index
+      };
+    });
+};
+
+const getDynamicSiteMediaField = (siteContent, field, body) => {
+  const staticField = siteMediaFieldMap[field];
+  if (staticField) {
+    return {
+      folderName: staticField.folderName,
+      currentImageUrl: siteContent.get(staticField.urlPath),
+      currentPublicId: siteContent.get(staticField.publicIdPath),
+      applyUpload: (uploadedImage) => {
+        siteContent.set(staticField.urlPath, uploadedImage.imageUrl);
+        siteContent.set(staticField.publicIdPath, uploadedImage.publicId);
+      }
+    };
+  }
+
+  if (field === 'heroSlideImage') {
+    const slideIndex = Number.parseInt(body.slideIndex, 10);
+    if (Number.isNaN(slideIndex) || slideIndex < 0 || slideIndex >= siteContent.hero.slides.length) {
+      return null;
+    }
+
+    const slide = siteContent.hero.slides[slideIndex];
+    return {
+      folderName: 'hero-slides',
+      currentImageUrl: slide.image,
+      currentPublicId: slide.imagePublicId,
+      applyUpload: (uploadedImage) => {
+        slide.image = uploadedImage.imageUrl;
+        slide.imagePublicId = uploadedImage.publicId;
+      }
+    };
+  }
+
+  if (field === 'managementProfileImage') {
+    const memberId = String(body.memberId || '').trim();
+    const profile = siteContent.about.managementProfiles.find((item) => item.id === memberId);
+
+    if (!profile) {
+      return null;
+    }
+
+    return {
+      folderName: 'leadership',
+      currentImageUrl: profile.imageUrl,
+      currentPublicId: profile.imagePublicId,
+      applyUpload: (uploadedImage) => {
+        profile.imageUrl = uploadedImage.imageUrl;
+        profile.imagePublicId = uploadedImage.publicId;
+      }
+    };
+  }
+
+  return null;
 };
 
 export const loginAdmin = async (req, res) => {
@@ -123,6 +231,13 @@ export const getAdminSiteContent = async (req, res) => {
 
 export const updateGeneralContent = async (req, res) => {
   const siteContent = await getSiteContent();
+  const currentHero = asPlainObject(siteContent.hero);
+  const currentBranding = asPlainObject(siteContent.branding);
+  const currentSocialLinks = asPlainObject(siteContent.socialLinks);
+  const currentHomepage = asPlainObject(siteContent.homepage);
+  const currentMotivation = asPlainObject(siteContent.motivation);
+  const nextHero = req.body.hero || {};
+  const nextHomepage = req.body.homepage || {};
 
   Object.assign(siteContent, {
     collegeName: req.body.collegeName?.trim() || siteContent.collegeName,
@@ -132,19 +247,33 @@ export const updateGeneralContent = async (req, res) => {
     headerLinks: Array.isArray(req.body.headerLinks) ? req.body.headerLinks : siteContent.headerLinks,
     footer: req.body.footer || siteContent.footer,
     hero: {
-      ...asPlainObject(siteContent.hero),
-      ...req.body.hero
+      ...currentHero,
+      ...nextHero,
+      slides: Array.isArray(nextHero.slides) ? normalizeHeroSlides(nextHero.slides, currentHero.slides) : currentHero.slides
     },
     branding: {
-      ...asPlainObject(siteContent.branding),
+      ...currentBranding,
       ...req.body.branding
     },
     socialLinks: {
-      ...asPlainObject(siteContent.socialLinks),
+      ...currentSocialLinks,
       ...req.body.socialLinks
     },
+    homepage: {
+      ...currentHomepage,
+      ...nextHomepage,
+      facilities: Array.isArray(nextHomepage.facilities)
+        ? normalizeFeatureList(nextHomepage.facilities)
+        : currentHomepage.facilities,
+      admissionSteps: Array.isArray(nextHomepage.admissionSteps)
+        ? normalizeFeatureList(nextHomepage.admissionSteps)
+        : currentHomepage.admissionSteps,
+      testimonials: Array.isArray(nextHomepage.testimonials)
+        ? normalizeTestimonials(nextHomepage.testimonials)
+        : currentHomepage.testimonials
+    },
     motivation: {
-      ...asPlainObject(siteContent.motivation),
+      ...currentMotivation,
       ...req.body.motivation
     }
   });
@@ -158,15 +287,13 @@ export const uploadSiteMedia = async (req, res) => {
     return res.status(400).json({ message: 'Image file is required.' });
   }
 
-  const mediaField = siteMediaFieldMap[req.body.field];
+  const siteContent = await getSiteContent();
+  const mediaField = getDynamicSiteMediaField(siteContent, req.body.field, req.body);
 
   if (!mediaField) {
     return res.status(400).json({ message: 'Invalid media field.' });
   }
 
-  const siteContent = await getSiteContent();
-  const currentImageUrl = siteContent.get(mediaField.urlPath);
-  const currentPublicId = siteContent.get(mediaField.publicIdPath);
   const uploadedImage = await uploadImageToCloudinary({
     buffer: req.file.buffer,
     mimeType: req.file.mimetype,
@@ -174,9 +301,8 @@ export const uploadSiteMedia = async (req, res) => {
     folderName: mediaField.folderName
   });
 
-  await deleteUploadedFile(currentImageUrl, currentPublicId);
-  siteContent.set(mediaField.urlPath, uploadedImage.imageUrl);
-  siteContent.set(mediaField.publicIdPath, uploadedImage.publicId);
+  await deleteUploadedFile(mediaField.currentImageUrl, mediaField.currentPublicId);
+  mediaField.applyUpload(uploadedImage);
 
   await siteContent.save();
   res.json({ site: siteContent });
@@ -184,9 +310,24 @@ export const uploadSiteMedia = async (req, res) => {
 
 export const updateAboutContent = async (req, res) => {
   const siteContent = await getSiteContent();
+  const currentAbout = asPlainObject(siteContent.about);
+  const nextProfiles = Array.isArray(req.body.managementProfiles)
+    ? normalizeManagementProfiles(req.body.managementProfiles, currentAbout.managementProfiles)
+    : currentAbout.managementProfiles;
+  const removedProfiles = (currentAbout.managementProfiles || []).filter(
+    (profile) => profile?.id && !nextProfiles.some((item) => item.id === profile.id)
+  );
+
+  await Promise.all(
+    removedProfiles.map((profile) => deleteUploadedFile(profile.imageUrl, profile.imagePublicId))
+  );
+
   siteContent.about = {
-    ...siteContent.about.toObject(),
-    ...req.body
+    ...currentAbout,
+    ...req.body,
+    principalImagePublicId: req.body.principalImagePublicId ?? currentAbout.principalImagePublicId ?? '',
+    ceoImagePublicId: req.body.ceoImagePublicId ?? currentAbout.ceoImagePublicId ?? '',
+    managementProfiles: nextProfiles
   };
 
   await siteContent.save();
@@ -364,6 +505,7 @@ export const listAdmissions = async (req, res) => {
   res.json(
     admissions.map((item) => ({
       ...item,
+      email: item.email,
       aadhaarNumber: decryptValue(item.aadhaarEncrypted)
     }))
   );

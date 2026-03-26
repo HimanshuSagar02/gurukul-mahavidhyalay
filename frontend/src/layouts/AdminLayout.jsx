@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext';
 
 const adminLinks = [
   { label: 'Dashboard', path: '/admin/dashboard' },
-  { label: 'Site Settings', path: '/admin/site' },
-  { label: 'About', path: '/admin/about' },
+  { label: 'Home Page', path: '/admin/home' },
+  { label: 'About Page', path: '/admin/about' },
   { label: 'Courses', path: '/admin/courses' },
   { label: 'Notifications', path: '/admin/notifications' },
   { label: 'Gallery', path: '/admin/gallery' },
@@ -22,7 +22,7 @@ export const AdminLayout = () => {
       <aside className="admin-sidebar">
         <div className="admin-sidebar__brand">
           <p>Hidden Admin Panel</p>
-          <strong>Gurukul Mahavidyalay</strong>
+          <strong>Gurukul Mahavidhyalya</strong>
         </div>
         <nav className="admin-sidebar__nav">
           {adminLinks.map((item) => (

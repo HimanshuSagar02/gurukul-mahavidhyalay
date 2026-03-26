@@ -4,13 +4,12 @@ const allowedMimeTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
-  'image/gif',
-  'image/svg+xml'
+  'image/gif'
 ]);
 
 const imageFilter = (req, file, cb) => {
   if (!allowedMimeTypes.has(file.mimetype)) {
-    return cb(new Error('Only image uploads are allowed.'));
+    return cb(new Error('Only JPG, PNG, WEBP, and GIF image uploads are allowed.'));
   }
 
   cb(null, true);

@@ -34,6 +34,7 @@ export const AdmissionsManagePage = () => {
                 <th>Name</th>
                 <th>Father Name</th>
                 <th>Mobile</th>
+                <th>Gmail / Email</th>
                 <th>Aadhaar</th>
                 <th>Marks</th>
                 <th>Subjects</th>
@@ -47,6 +48,7 @@ export const AdmissionsManagePage = () => {
                   <td>{item.name}</td>
                   <td>{item.fatherName}</td>
                   <td>{item.mobileNumber}</td>
+                  <td>{item.email}</td>
                   <td>{item.aadhaarNumber}</td>
                   <td>{item.marksPercentage}</td>
                   <td>{item.selectedSubjects.join(', ') || '-'}</td>

@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
-import { api, resolveMediaUrl } from '../../api/client';
+import { acceptedImageTypes, api, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
+
+const createFeatureItem = () => ({
+  title: '',
+  description: '',
+  badge: ''
+});
+
+const createTestimonial = () => ({
+  name: '',
+  role: '',
+  quote: ''
+});
 
 const mapSiteToForm = (site) => ({
   collegeName: site.collegeName || '',
@@ -12,13 +24,17 @@ const mapSiteToForm = (site) => ({
     subheadline: site.hero?.subheadline || '',
     bannerNote: site.hero?.bannerNote || '',
     primaryCtaLabel: site.hero?.primaryCtaLabel || 'Apply Now',
-    secondaryCtaLabel: site.hero?.secondaryCtaLabel || 'View Courses',
-    slides: site.hero?.slides || []
+    secondaryCtaLabel: site.hero?.secondaryCtaLabel || 'Admissions Open',
+    tertiaryCtaLabel: site.hero?.tertiaryCtaLabel || 'Contact Us',
+    slides: (site.hero?.slides || []).map((slide) => ({
+      title: slide.title || '',
+      subtitle: slide.subtitle || '',
+      image: slide.image || '',
+      imagePublicId: slide.imagePublicId || ''
+    }))
   },
   branding: {
-    websiteLogoUrl: site.branding?.websiteLogoUrl || '/logo-mark.svg',
-    managementLogoUrl: site.branding?.managementLogoUrl || '',
-    managementLogoTitle: site.branding?.managementLogoTitle || 'Management Logo'
+    websiteLogoUrl: site.branding?.websiteLogoUrl || '/logo-mark.svg'
   },
   socialLinks: {
     facebook: site.socialLinks?.facebook || '',
@@ -26,11 +42,22 @@ const mapSiteToForm = (site) => ({
     youtube: site.socialLinks?.youtube || '',
     whatsapp: site.socialLinks?.whatsapp || ''
   },
-  motivation: {
-    enabled: Boolean(site.motivation?.enabled),
-    title: site.motivation?.title || 'Student Motivation',
-    text: site.motivation?.text || '',
-    imageUrl: site.motivation?.imageUrl || ''
+  homepage: {
+    facilities: (site.homepage?.facilities || []).map((item) => ({
+      title: item.title || '',
+      description: item.description || '',
+      badge: item.badge || ''
+    })),
+    admissionSteps: (site.homepage?.admissionSteps || []).map((item) => ({
+      title: item.title || '',
+      description: item.description || '',
+      badge: item.badge || ''
+    })),
+    testimonials: (site.homepage?.testimonials || []).map((item) => ({
+      name: item.name || '',
+      role: item.role || '',
+      quote: item.quote || ''
+    }))
   }
 });
 
@@ -52,7 +79,7 @@ export const SiteSettingsPage = () => {
     return <LoadingScreen label="Loading site settings..." />;
   }
 
-  const handleMediaUpload = async (field, file) => {
+  const handleMediaUpload = async (field, file, extraFields = {}) => {
     if (!file) {
       return;
     }
@@ -63,6 +90,9 @@ export const SiteSettingsPage = () => {
       const payload = new FormData();
       payload.append('field', field);
       payload.append('image', file);
+      Object.entries(extraFields).forEach(([key, value]) => {
+        payload.append(key, String(value));
+      });
 
       const response = await api.post('/admin/site/media', payload);
       setForm(mapSiteToForm(response.site));
@@ -77,8 +107,9 @@ export const SiteSettingsPage = () => {
     setStatus({ error: '', success: '', saving: true });
 
     try {
-      await api.put('/admin/site/general', form);
-      setStatus({ error: '', success: 'Site settings updated successfully.', saving: false });
+      const response = await api.put('/admin/site/general', form);
+      setForm(mapSiteToForm(response));
+      setStatus({ error: '', success: 'Home page content updated successfully.', saving: false });
     } catch (error) {
       setStatus({ error: error.message, success: '', saving: false });
     }
@@ -87,8 +118,8 @@ export const SiteSettingsPage = () => {
   return (
     <div className="admin-page">
       <div className="admin-section-heading">
-        <p>Site Settings</p>
-        <h2>General and Homepage Content</h2>
+        <p>Home Page</p>
+        <h2>Home page content and visible sections</h2>
       </div>
 
       <form className="admin-card form-card" onSubmit={handleSubmit}>
@@ -115,7 +146,7 @@ export const SiteSettingsPage = () => {
             />
           </label>
           <label className="form-grid__full">
-            <span>Announcement Ticker</span>
+            <span>Announcement Text</span>
             <textarea
               rows="3"
               value={form.announcementTicker}
@@ -152,7 +183,7 @@ export const SiteSettingsPage = () => {
             />
           </label>
           <label>
-            <span>Primary CTA Label</span>
+            <span>Primary Button Label</span>
             <input
               value={form.hero.primaryCtaLabel}
               onChange={(event) =>
@@ -164,7 +195,7 @@ export const SiteSettingsPage = () => {
             />
           </label>
           <label>
-            <span>Secondary CTA Label</span>
+            <span>Secondary Button Label</span>
             <input
               value={form.hero.secondaryCtaLabel}
               onChange={(event) =>
@@ -175,25 +206,25 @@ export const SiteSettingsPage = () => {
               }
             />
           </label>
+          <label>
+            <span>Contact Button Label</span>
+            <input
+              value={form.hero.tertiaryCtaLabel}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  hero: { ...current.hero, tertiaryCtaLabel: event.target.value }
+                }))
+              }
+            />
+          </label>
         </div>
 
         <div className="stacked-fields">
-          <h3>Branding and Official Links</h3>
+          <h3>Branding and Footer Social Links</h3>
 
           <div className="form-grid">
-            <label>
-              <span>Management Logo Title</span>
-              <input
-                value={form.branding.managementLogoTitle}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    branding: { ...current.branding, managementLogoTitle: event.target.value }
-                  }))
-                }
-              />
-            </label>
-            <div className="form-grid__full media-upload-grid">
+            <div className="form-grid__full media-upload-grid media-upload-grid--single">
               <div className="media-upload-card">
                 <span>Website Logo</span>
                 <div className="media-upload-card__preview">
@@ -201,32 +232,11 @@ export const SiteSettingsPage = () => {
                 </div>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={acceptedImageTypes}
                   disabled={Boolean(mediaStatus.uploading)}
                   onChange={async (event) => {
                     const file = event.target.files?.[0];
                     await handleMediaUpload('websiteLogo', file);
-                    event.target.value = '';
-                  }}
-                />
-              </div>
-
-              <div className="media-upload-card">
-                <span>Management Logo</span>
-                <div className="media-upload-card__preview">
-                  {form.branding.managementLogoUrl ? (
-                    <img src={resolveMediaUrl(form.branding.managementLogoUrl)} alt="Management logo preview" />
-                  ) : (
-                    <p>Upload a management logo to show it on the home page.</p>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={Boolean(mediaStatus.uploading)}
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0];
-                    await handleMediaUpload('managementLogo', file);
                     event.target.value = '';
                   }}
                 />
@@ -287,130 +297,335 @@ export const SiteSettingsPage = () => {
         </div>
 
         <div className="stacked-fields">
-          <h3>Motivation Section</h3>
-
-          <label className="checkbox-item">
-            <input
-              type="checkbox"
-              checked={Boolean(form.motivation.enabled)}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  motivation: { ...current.motivation, enabled: event.target.checked }
-                }))
-              }
-            />
-            <span>Show motivation block on the home page</span>
-          </label>
-
-          <div className="form-grid">
-            <label>
-              <span>Motivation Title</span>
-              <input
-                value={form.motivation.title}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    motivation: { ...current.motivation, title: event.target.value }
-                  }))
-                }
-              />
-            </label>
-            <label className="form-grid__full">
-              <span>Motivation Text</span>
-              <textarea
-                rows="4"
-                value={form.motivation.text}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    motivation: { ...current.motivation, text: event.target.value }
-                  }))
-                }
-              />
-            </label>
-            <div className="form-grid__full media-upload-card">
-              <span>Motivation Image</span>
-              <div className="media-upload-card__preview">
-                {form.motivation.imageUrl ? (
-                  <img src={resolveMediaUrl(form.motivation.imageUrl)} alt="Motivation preview" />
-                ) : (
-                  <p>Upload an optional motivation image for the home page.</p>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                disabled={Boolean(mediaStatus.uploading)}
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  await handleMediaUpload('motivationImage', file);
-                  event.target.value = '';
-                }}
-              />
-            </div>
+          <div>
+            <h3>Hero Slide Images</h3>
+            <p className="admin-helper-text">These images are used in the top hero area of the home page.</p>
           </div>
-        </div>
-
-        <div className="stacked-fields">
-          <h3>Hero Slides</h3>
           {form.hero.slides.map((slide, index) => (
             <div key={`${slide.image}-${index}`} className="admin-subcard">
               <div className="form-grid">
-                <label>
-                  <span>Slide Title</span>
+                <div className="form-grid__full media-upload-card">
+                  <span>Slide Image {index + 1}</span>
+                  <div className="media-upload-card__preview media-upload-card__preview--cover">
+                    {slide.image ? (
+                      <img src={resolveMediaUrl(slide.image)} alt={`Slide ${index + 1} preview`} />
+                    ) : (
+                      <p>Current slide image will stay until you replace it from file chooser.</p>
+                    )}
+                  </div>
                   <input
-                    value={slide.title}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        hero: {
-                          ...current.hero,
-                          slides: current.hero.slides.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, title: event.target.value } : item
-                          )
-                        }
-                      }))
-                    }
+                    type="file"
+                    accept={acceptedImageTypes}
+                    disabled={Boolean(mediaStatus.uploading)}
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      await handleMediaUpload('heroSlideImage', file, { slideIndex: index });
+                      event.target.value = '';
+                    }}
                   />
-                </label>
-                <label>
-                  <span>Slide Image URL</span>
-                  <input
-                    value={slide.image}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        hero: {
-                          ...current.hero,
-                          slides: current.hero.slides.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, image: event.target.value } : item
-                          )
-                        }
-                      }))
-                    }
-                  />
-                </label>
-                <label className="form-grid__full">
-                  <span>Slide Subtitle</span>
-                  <input
-                    value={slide.subtitle}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        hero: {
-                          ...current.hero,
-                          slides: current.hero.slides.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, subtitle: event.target.value } : item
-                          )
-                        }
-                      }))
-                    }
-                  />
-                </label>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="stacked-fields">
+          <div className="stacked-list__row stacked-list__row--start">
+            <div>
+              <h3>Facilities Section</h3>
+              <p className="admin-helper-text">These facility cards are shown on the home page.</p>
+            </div>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  homepage: {
+                    ...current.homepage,
+                    facilities: [...current.homepage.facilities, createFeatureItem()]
+                  }
+                }))
+              }
+            >
+              Add Facility
+            </button>
+          </div>
+
+          {form.homepage.facilities.length ? (
+            form.homepage.facilities.map((item, index) => (
+              <div key={`facility-${index}`} className="admin-subcard form-card">
+                <div className="stacked-list__row stacked-list__row--start">
+                  <h3>Facility {index + 1}</h3>
+                  <button
+                    type="button"
+                    className="button button--danger"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        homepage: {
+                          ...current.homepage,
+                          facilities: current.homepage.facilities.filter((_, itemIndex) => itemIndex !== index)
+                        }
+                      }))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    <span>Badge</span>
+                    <input
+                      maxLength={4}
+                      value={item.badge}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            facilities: current.homepage.facilities.map((facility, itemIndex) =>
+                              itemIndex === index ? { ...facility, badge: event.target.value } : facility
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Title</span>
+                    <input
+                      value={item.title}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            facilities: current.homepage.facilities.map((facility, itemIndex) =>
+                              itemIndex === index ? { ...facility, title: event.target.value } : facility
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="form-grid__full">
+                    <span>Description</span>
+                    <textarea
+                      rows="4"
+                      value={item.description}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            facilities: current.homepage.facilities.map((facility, itemIndex) =>
+                              itemIndex === index ? { ...facility, description: event.target.value } : facility
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="admin-helper-text">No facilities added yet.</p>
+          )}
+        </div>
+
+        <div className="stacked-fields">
+          <div className="stacked-list__row stacked-list__row--start">
+            <div>
+              <h3>Admission Process</h3>
+              <p className="admin-helper-text">These steps appear in the admission process section on the home page.</p>
+            </div>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  homepage: {
+                    ...current.homepage,
+                    admissionSteps: [...current.homepage.admissionSteps, createFeatureItem()]
+                  }
+                }))
+              }
+            >
+              Add Step
+            </button>
+          </div>
+
+          {form.homepage.admissionSteps.length ? (
+            form.homepage.admissionSteps.map((item, index) => (
+              <div key={`step-${index}`} className="admin-subcard form-card">
+                <div className="stacked-list__row stacked-list__row--start">
+                  <h3>Step {index + 1}</h3>
+                  <button
+                    type="button"
+                    className="button button--danger"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        homepage: {
+                          ...current.homepage,
+                          admissionSteps: current.homepage.admissionSteps.filter((_, itemIndex) => itemIndex !== index)
+                        }
+                      }))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    <span>Step Title</span>
+                    <input
+                      value={item.title}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            admissionSteps: current.homepage.admissionSteps.map((step, itemIndex) =>
+                              itemIndex === index ? { ...step, title: event.target.value } : step
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="form-grid__full">
+                    <span>Step Description</span>
+                    <textarea
+                      rows="4"
+                      value={item.description}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            admissionSteps: current.homepage.admissionSteps.map((step, itemIndex) =>
+                              itemIndex === index ? { ...step, description: event.target.value } : step
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="admin-helper-text">No admission steps added yet.</p>
+          )}
+        </div>
+
+        <div className="stacked-fields">
+          <div className="stacked-list__row stacked-list__row--start">
+            <div>
+              <h3>Testimonials Section</h3>
+              <p className="admin-helper-text">Student or alumni testimonials shown on the home page can be managed here.</p>
+            </div>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  homepage: {
+                    ...current.homepage,
+                    testimonials: [...current.homepage.testimonials, createTestimonial()]
+                  }
+                }))
+              }
+            >
+              Add Testimonial
+            </button>
+          </div>
+
+          {form.homepage.testimonials.length ? (
+            form.homepage.testimonials.map((item, index) => (
+              <div key={`testimonial-${index}`} className="admin-subcard form-card">
+                <div className="stacked-list__row stacked-list__row--start">
+                  <h3>Testimonial {index + 1}</h3>
+                  <button
+                    type="button"
+                    className="button button--danger"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        homepage: {
+                          ...current.homepage,
+                          testimonials: current.homepage.testimonials.filter((_, itemIndex) => itemIndex !== index)
+                        }
+                      }))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    <span>Name</span>
+                    <input
+                      value={item.name}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            testimonials: current.homepage.testimonials.map((testimonial, itemIndex) =>
+                              itemIndex === index ? { ...testimonial, name: event.target.value } : testimonial
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Role / Identity</span>
+                    <input
+                      value={item.role}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            testimonials: current.homepage.testimonials.map((testimonial, itemIndex) =>
+                              itemIndex === index ? { ...testimonial, role: event.target.value } : testimonial
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="form-grid__full">
+                    <span>Quote</span>
+                    <textarea
+                      rows="4"
+                      value={item.quote}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            testimonials: current.homepage.testimonials.map((testimonial, itemIndex) =>
+                              itemIndex === index ? { ...testimonial, quote: event.target.value } : testimonial
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="admin-helper-text">No testimonials added yet.</p>
+          )}
         </div>
 
         {mediaStatus.error ? <p className="form-message form-message--error">{mediaStatus.error}</p> : null}
@@ -419,7 +634,7 @@ export const SiteSettingsPage = () => {
         {status.success ? <p className="form-message form-message--success">{status.success}</p> : null}
 
         <button type="submit" className="button" disabled={status.saving}>
-          {status.saving ? 'Saving...' : 'Save Site Settings'}
+          {status.saving ? 'Saving...' : 'Save Home Page Content'}
         </button>
       </form>
     </div>

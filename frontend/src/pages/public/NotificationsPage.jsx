@@ -17,15 +17,12 @@ export const NotificationsPage = () => {
   }, []);
 
   if (!notifications) {
-    return <LoadingScreen label="Please wait..." />;
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <PageBanner
-        title="Notifications"
-        subtitle="Latest news, notices, and important updates."
-      />
+      <PageBanner title="Notifications" subtitle="Official notices, updates, and announcements." />
 
       <section className="section">
         <div className="container">
@@ -35,20 +32,17 @@ export const NotificationsPage = () => {
                 <article key={notice._id} className="notice-table__row">
                   <div className="notice-table__date">
                     <strong>{formatDate(notice.publishedAt)}</strong>
-                    <span>{notice.category}</span>
+                    {notice.category ? <span>{notice.category}</span> : null}
                   </div>
                   <div className="notice-table__content">
                     <h3>{notice.title}</h3>
-                    <p>{notice.description || 'More details will be shared soon.'}</p>
+                    {notice.description ? <p>{notice.description}</p> : null}
                   </div>
                 </article>
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="No updates right now"
-              description="Fresh updates will appear here soon."
-            />
+            <EmptyState title="No notifications available" description="Current notices will appear here as soon as they are published." />
           )}
         </div>
       </section>

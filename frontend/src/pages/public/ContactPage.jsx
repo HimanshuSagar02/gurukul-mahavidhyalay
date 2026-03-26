@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { api } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { SectionHeading } from '../../components/SectionHeading';
@@ -11,25 +12,23 @@ const initialForm = {
   message: ''
 };
 
+const sanitizePhoneLink = (value = '') => value.replace(/[^\d+]/g, '');
+
 export const ContactPage = () => {
-  const [data, setData] = useState(null);
+  const { site } = useOutletContext();
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState({ error: '', success: '', submitting: false });
 
-  useEffect(() => {
-    const loadContact = async () => {
-      const response = await api.get('/public/contact');
-      setData(response);
-    };
-
-    loadContact();
-  }, []);
-
-  if (!data) {
-    return <LoadingScreen label="Please wait..." />;
+  if (!site) {
+    return <LoadingScreen />;
   }
 
-  const { contact } = data;
+  const contact = site.contact || {};
+  const contactCards = [
+    contact.address ? { label: 'Address', value: contact.address } : null,
+    contact.phone ? { label: 'Phone', value: contact.phone, href: `tel:${sanitizePhoneLink(contact.phone)}` } : null,
+    contact.email ? { label: 'Email', value: contact.email, href: `mailto:${contact.email}` } : null
+  ].filter(Boolean);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -46,48 +45,38 @@ export const ContactPage = () => {
 
   return (
     <>
-      <PageBanner
-        title="Contact"
-        subtitle="We are here to help with admissions and general questions."
-      />
+      <PageBanner title="Contact" subtitle="Reach the college for admissions, academic queries, and general support." />
 
       <section className="section">
         <div className="container contact-page">
           <div>
-            <SectionHeading eyebrow="Contact Details" title="Get in Touch" description={contact.inquiryText} />
-            <div className="contact-grid">
-              <article className="content-block">
-                <h3>Address</h3>
-                <p>{contact.address}</p>
-              </article>
-              <article className="content-block">
-                <h3>Phone</h3>
-                <p>{contact.phone || 'Coming soon'}</p>
-              </article>
-              <article className="content-block">
-                <h3>Email</h3>
-                <p>{contact.email || 'Coming soon'}</p>
-              </article>
-            </div>
+            <SectionHeading eyebrow="Contact Details" title="Get in touch" description={contact.inquiryText} />
+
+            {contactCards.length ? (
+              <div className="contact-grid">
+                {contactCards.map((item) => (
+                  <article key={item.label} className="content-block">
+                    <h3>{item.label}</h3>
+                    {item.href ? <a href={item.href}>{item.value}</a> : <p>{item.value}</p>}
+                  </article>
+                ))}
+              </div>
+            ) : null}
 
             {contact.mapEmbedUrl ? (
               <div className="map-frame">
-                <iframe src={contact.mapEmbedUrl} title="College location map" loading="lazy" />
+                <iframe src={contact.mapEmbedUrl} title="College location map" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               </div>
-            ) : (
-              <div className="content-block">
-                <h3>Location</h3>
-                <p>Location details will be shared here soon.</p>
-              </div>
-            )}
+            ) : null}
           </div>
 
           <form className="admin-card form-card" onSubmit={handleSubmit}>
-            <SectionHeading eyebrow="Send a Message" title={contact.inquiryHeadline} />
+            <SectionHeading eyebrow="Send a Message" title={contact.inquiryHeadline || 'Send us a message'} />
             <label>
               <span>Name</span>
               <input
                 value={form.name}
+                autoComplete="name"
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                 required
               />
@@ -97,6 +86,7 @@ export const ContactPage = () => {
               <input
                 type="email"
                 value={form.email}
+                autoComplete="email"
                 onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                 required
               />
@@ -104,6 +94,9 @@ export const ContactPage = () => {
             <label>
               <span>Phone</span>
               <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
               />

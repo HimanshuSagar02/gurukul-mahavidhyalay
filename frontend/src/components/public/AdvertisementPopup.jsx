@@ -25,34 +25,40 @@ export const AdvertisementPopup = ({ popup }) => {
     return null;
   }
 
-  const content = (
-    <div className="popup">
-      <button
-        type="button"
-        className="popup__close"
-        onClick={() => {
-          window.localStorage.setItem(storageKey, 'closed');
-          setDismissed(true);
-        }}
-      >
-        ×
-      </button>
-      <div className="popup__body">
-        <span className="popup__label">{popup.title || 'Important Update'}</span>
-        <img src={resolveMediaUrl(popup.imageUrl)} alt={popup.title || 'Advertisement'} />
-      </div>
-    </div>
+  const media = (
+    <img
+      src={resolveMediaUrl(popup.imageUrl)}
+      alt={popup.title || 'Important update'}
+      decoding="async"
+      fetchPriority="high"
+    />
   );
 
   return (
-    <div className="popup-overlay">
-      {popup.redirectUrl ? (
-        <a href={popup.redirectUrl} target="_blank" rel="noreferrer" className="popup__link">
-          {content}
-        </a>
-      ) : (
-        content
-      )}
+    <div className="popup-overlay" role="dialog" aria-modal="true" aria-label={popup.title || 'Important update'}>
+      <div className="popup">
+        <button
+          type="button"
+          className="popup__close"
+          aria-label="Close popup"
+          onClick={() => {
+            window.localStorage.setItem(storageKey, 'closed');
+            setDismissed(true);
+          }}
+        >
+          Close
+        </button>
+        <div className="popup__body">
+          <span className="popup__label">{popup.title || 'Important Update'}</span>
+          {popup.redirectUrl ? (
+            <a href={popup.redirectUrl} target="_blank" rel="noreferrer" className="popup__link">
+              {media}
+            </a>
+          ) : (
+            media
+          )}
+        </div>
+      </div>
     </div>
   );
 };

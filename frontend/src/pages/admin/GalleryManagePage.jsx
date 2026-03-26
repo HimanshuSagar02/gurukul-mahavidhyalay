@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, resolveMediaUrl } from '../../api/client';
+import { acceptedImageTypes, api, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
 
 export const GalleryManagePage = () => {
@@ -56,7 +56,7 @@ export const GalleryManagePage = () => {
             <span>Image File</span>
             <input
               type="file"
-              accept="image/*"
+              accept={acceptedImageTypes}
               onChange={(event) => setForm((current) => ({ ...current, image: event.target.files?.[0] || null }))}
               required
             />

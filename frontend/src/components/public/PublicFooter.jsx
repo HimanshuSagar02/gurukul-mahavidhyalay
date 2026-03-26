@@ -1,82 +1,102 @@
 import { Link } from 'react-router-dom';
-import { resolveMediaUrl } from '../../api/client';
+import { getVisibleSocialLinks, isExternalUrl, resolveMediaUrl } from '../../api/client';
 
-const socialLinks = (site) =>
-  [
-    { label: 'Facebook', url: site?.socialLinks?.facebook },
-    { label: 'Instagram', url: site?.socialLinks?.instagram },
-    { label: 'YouTube', url: site?.socialLinks?.youtube },
-    { label: 'WhatsApp', url: site?.socialLinks?.whatsapp }
-  ].filter((item) => item.url);
+const fallbackLinks = [
+  { label: 'Home', path: '/' },
+  { label: 'About', path: '/about' },
+  { label: 'Courses', path: '/courses' },
+  { label: 'Admission', path: '/admissions' },
+  { label: 'Contact', path: '/contact' }
+];
 
-export const PublicFooter = ({ site }) => (
-  <footer className="site-footer">
-    <div className="container site-footer__grid">
-      <div>
-        <div className="site-footer__brand">
-          <img
-            src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
-            alt={`${site?.collegeName || 'College'} logo`}
-            className="site-footer__logo"
-          />
-          <h3>{site?.collegeName || 'Gurukul Mahavidyalay'}</h3>
+const getFooterLinks = (site) => {
+  const sourceLinks = [...(site?.footer?.quickLinks || []), ...(site?.footer?.exploreLinks || [])];
+  const dedupedLinks = sourceLinks.filter(
+    (link, index) =>
+      link?.label &&
+      link?.path &&
+      sourceLinks.findIndex((item) => item.label === link.label && item.path === link.path) === index
+  );
+
+  return dedupedLinks.length ? dedupedLinks : fallbackLinks;
+};
+
+const sanitizePhoneLink = (value = '') => value.replace(/[^\d+]/g, '');
+
+export const PublicFooter = ({ site }) => {
+  const footerLinks = getFooterLinks(site);
+  const socialLinks = getVisibleSocialLinks(site);
+  const contactItems = [
+    site?.contact?.address ? { label: 'Address', value: site.contact.address } : null,
+    site?.contact?.phone
+      ? { label: 'Phone', value: site.contact.phone, href: `tel:${sanitizePhoneLink(site.contact.phone)}` }
+      : null,
+    site?.contact?.email ? { label: 'Email', value: site.contact.email, href: `mailto:${site.contact.email}` } : null
+  ].filter(Boolean);
+
+  return (
+    <footer className="site-footer">
+      <div className="container site-footer__grid">
+        <div>
+          <div className="site-footer__brand">
+            <img
+              src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
+              alt={`${site?.collegeName || 'College'} logo`}
+              className="site-footer__logo"
+              loading="lazy"
+              decoding="async"
+            />
+            <h3>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h3>
+          </div>
+          {site?.affiliation ? <p>{site.affiliation}</p> : null}
+          {site?.location ? <p>{site.location}</p> : null}
+          {socialLinks.length ? (
+            <div className="site-footer__socials">
+              {socialLinks.map((link) => (
+                <a key={link.label} href={link.url} target="_blank" rel="noreferrer" aria-label={link.label}>
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
-        <p>{site?.affiliation}</p>
-        <p>{site?.contact?.address || site?.location}</p>
-        {socialLinks(site).length ? (
-          <div className="site-footer__socials">
-            {socialLinks(site).map((link) => (
-              <a key={link.label} href={link.url} target="_blank" rel="noreferrer">
-                {link.label}
-              </a>
+
+        <div className="site-footer__nav">
+          <h4>Navigation</h4>
+          <ul>
+            {footerLinks.map((link) => (
+              <li key={`${link.label}-${link.path}`}>
+                {isExternalUrl(link.path) ? (
+                  <a href={link.path} target="_blank" rel="noreferrer">
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link to={link.path}>{link.label}</Link>
+                )}
+              </li>
             ))}
+          </ul>
+        </div>
+
+        {contactItems.length ? (
+          <div>
+            <h4>Contact</h4>
+            <ul className="site-footer__contact-list">
+              {contactItems.map((item) => (
+                <li key={item.label}>
+                  <span>{item.label}</span>
+                  {item.href ? <a href={item.href}>{item.value}</a> : <strong>{item.value}</strong>}
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
       </div>
-      <div>
-        <h4>Quick Links</h4>
-        <ul>
-          {(site?.footer?.quickLinks || []).map((link) => (
-            <li key={`${link.label}-${link.path}`}>
-              {link.path?.startsWith('http') ? (
-                <a href={link.path} target="_blank" rel="noreferrer">
-                  {link.label}
-                </a>
-              ) : (
-                <Link to={link.path}>{link.label}</Link>
-              )}
-            </li>
-          ))}
-        </ul>
+      <div className="site-footer__bottom">
+        <div className="container">
+          <p>Copyright (c) {new Date().getFullYear()} {site?.collegeName || 'Gurukul Mahavidhyalya'}. All rights reserved.</p>
+        </div>
       </div>
-      <div>
-        <h4>Explore</h4>
-        <ul>
-          {(site?.footer?.exploreLinks || []).map((link) => (
-            <li key={`${link.label}-${link.path}`}>
-              {link.path?.startsWith('http') ? (
-                <a href={link.path} target="_blank" rel="noreferrer">
-                  {link.label}
-                </a>
-              ) : (
-                <Link to={link.path}>{link.label}</Link>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <ul>
-          <li>{site?.contact?.phone || 'Phone details coming soon'}</li>
-          <li>{site?.contact?.email || 'Email details coming soon'}</li>
-        </ul>
-      </div>
-    </div>
-    <div className="site-footer__bottom">
-      <div className="container">
-        <p>Copyright (c) {new Date().getFullYear()} Gurukul Mahavidyalay. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};

@@ -19,62 +19,60 @@ export const CoursesPage = () => {
   }, []);
 
   if (!courses) {
-    return <LoadingScreen label="Please wait..." />;
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <PageBanner
-        title="Courses"
-        subtitle="Course details, subjects, and entry requirements."
-      />
+      <PageBanner title="Courses" subtitle="Current academic offerings and eligibility details." />
 
       <section className="section">
         <div className="container">
-          <SectionHeading
-            eyebrow="Course Details"
-            title="Explore what we offer"
-            description="See the course structure, subjects, and entry requirements."
-          />
+          <SectionHeading eyebrow="Academic Programmes" title="Available courses" />
 
           {courses.length ? (
             <div className="course-stack">
               {courses.map((course) => (
                 <article key={course._id} className="course-sheet">
                   <div>
-                    <span className="course-sheet__meta">{course.duration || 'Full Course Details'}</span>
+                    {course.duration ? <span className="course-sheet__meta">{course.duration}</span> : null}
                     <h2>{course.title}</h2>
-                    <p>{course.overview}</p>
+                    {course.overview ? <p>{course.overview}</p> : null}
                   </div>
-                  <div className="course-sheet__details">
-                    <div>
-                      <h3>Eligibility</h3>
-                      <p>{course.eligibility}</p>
+                  {(course.eligibility || course.subjects.length) ? (
+                    <div className="course-sheet__details">
+                      {course.eligibility ? (
+                        <div>
+                          <h3>Eligibility</h3>
+                          <p>{course.eligibility}</p>
+                        </div>
+                      ) : null}
+                      {course.subjects.length ? (
+                        <div>
+                          <h3>Subjects</h3>
+                          <ul className="subject-list subject-list--wide">
+                            {course.subjects.map((subject) => (
+                              <li key={subject}>{subject}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                     </div>
-                    <div>
-                      <h3>Subjects</h3>
-                      <ul className="subject-list subject-list--wide">
-                        {course.subjects.map((subject) => (
-                          <li key={subject}>{subject}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                  ) : null}
                 </article>
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="Course details coming soon"
-              description="Please check back soon for the latest course information."
-            />
+            <EmptyState title="Courses will be listed soon" description="Please check back for updated programme details." />
           )}
 
-          <div className="section__actions">
-            <Link to="/admissions" className="button">
-              Apply Now
-            </Link>
-          </div>
+          {courses.length ? (
+            <div className="section__actions">
+              <Link to="/admissions" className="button">
+                Apply for Admission
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
     </>

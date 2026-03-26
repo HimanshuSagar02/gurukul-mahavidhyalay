@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, resolveMediaUrl } from '../../api/client';
+import { acceptedImageTypes, api, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
 
 export const PopupManagePage = () => {
@@ -62,7 +62,11 @@ export const PopupManagePage = () => {
           </label>
           <label className="form-grid__full">
             <span>Upload Poster</span>
-            <input type="file" accept="image/*" onChange={(event) => setPopup((current) => ({ ...current, image: event.target.files?.[0] || null }))} />
+            <input
+              type="file"
+              accept={acceptedImageTypes}
+              onChange={(event) => setPopup((current) => ({ ...current, image: event.target.files?.[0] || null }))}
+            />
           </label>
         </div>
 

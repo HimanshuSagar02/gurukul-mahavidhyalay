@@ -12,7 +12,39 @@ const heroSlideSchema = new mongoose.Schema(
   {
     title: { type: String, trim: true, required: true },
     subtitle: { type: String, trim: true, default: '' },
-    image: { type: String, trim: true, required: true }
+    image: { type: String, trim: true, required: true },
+    imagePublicId: { type: String, trim: true, default: '' }
+  },
+  { _id: false }
+);
+
+const leadershipProfileSchema = new mongoose.Schema(
+  {
+    id: { type: String, trim: true, required: true },
+    name: { type: String, trim: true, default: '' },
+    work: { type: String, trim: true, default: '' },
+    experience: { type: String, trim: true, default: '' },
+    imageUrl: { type: String, trim: true, default: '' },
+    imagePublicId: { type: String, trim: true, default: '' },
+    displayOrder: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+
+const featureItemSchema = new mongoose.Schema(
+  {
+    title: { type: String, trim: true, default: '' },
+    description: { type: String, trim: true, default: '' },
+    badge: { type: String, trim: true, default: '' }
+  },
+  { _id: false }
+);
+
+const testimonialSchema = new mongoose.Schema(
+  {
+    name: { type: String, trim: true, default: '' },
+    role: { type: String, trim: true, default: '' },
+    quote: { type: String, trim: true, default: '' }
   },
   { _id: false }
 );
@@ -63,7 +95,8 @@ const siteContentSchema = new mongoose.Schema(
       subheadline: { type: String, trim: true, default: '' },
       bannerNote: { type: String, trim: true, default: '' },
       primaryCtaLabel: { type: String, trim: true, default: 'Apply Now' },
-      secondaryCtaLabel: { type: String, trim: true, default: 'View Courses' },
+      secondaryCtaLabel: { type: String, trim: true, default: 'Admissions Open' },
+      tertiaryCtaLabel: { type: String, trim: true, default: 'Contact Us' },
       slides: {
         type: [heroSlideSchema],
         default: []
@@ -71,14 +104,25 @@ const siteContentSchema = new mongoose.Schema(
     },
     branding: {
       websiteLogoUrl: { type: String, trim: true, default: '/logo-mark.svg' },
-      websiteLogoPublicId: { type: String, trim: true, default: '' },
-      managementLogoUrl: { type: String, trim: true, default: '' },
-      managementLogoPublicId: { type: String, trim: true, default: '' },
-      managementLogoTitle: { type: String, trim: true, default: 'Management Logo' }
+      websiteLogoPublicId: { type: String, trim: true, default: '' }
     },
     socialLinks: {
       type: socialLinksSchema,
       default: () => ({})
+    },
+    homepage: {
+      facilities: {
+        type: [featureItemSchema],
+        default: []
+      },
+      admissionSteps: {
+        type: [featureItemSchema],
+        default: []
+      },
+      testimonials: {
+        type: [testimonialSchema],
+        default: []
+      }
     },
     motivation: {
       enabled: { type: Boolean, default: false },
@@ -98,7 +142,17 @@ const siteContentSchema = new mongoose.Schema(
       principalName: { type: String, trim: true, default: '' },
       principalDesignation: { type: String, trim: true, default: '' },
       principalMessage: { type: String, trim: true, default: '' },
-      principalImage: { type: String, trim: true, default: '/placeholders/principal-placeholder.svg' }
+      principalImage: { type: String, trim: true, default: '/placeholders/principal-placeholder.svg' },
+      principalImagePublicId: { type: String, trim: true, default: '' },
+      ceoName: { type: String, trim: true, default: '' },
+      ceoDesignation: { type: String, trim: true, default: '' },
+      ceoMessage: { type: String, trim: true, default: '' },
+      ceoImage: { type: String, trim: true, default: '' },
+      ceoImagePublicId: { type: String, trim: true, default: '' },
+      managementProfiles: {
+        type: [leadershipProfileSchema],
+        default: []
+      }
     },
     contact: {
       address: { type: String, trim: true, default: '' },

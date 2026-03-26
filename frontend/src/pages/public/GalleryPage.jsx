@@ -17,15 +17,12 @@ export const GalleryPage = () => {
   }, []);
 
   if (!gallery) {
-    return <LoadingScreen label="Please wait..." />;
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <PageBanner
-        title="Gallery"
-        subtitle="A collection of campus moments and special occasions."
-      />
+      <PageBanner title="Gallery" subtitle="Selected moments from academic and campus life." />
 
       <section className="section">
         <div className="container">
@@ -33,8 +30,8 @@ export const GalleryPage = () => {
             <div className="gallery-grid">
               {gallery.map((item) => (
                 <figure key={item._id} className="gallery-grid__item">
-                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.caption || 'Gallery item'} />
-                  {item.caption || item.category || item.photoOf ? (
+                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.caption || 'Gallery item'} loading="lazy" decoding="async" />
+                  {(item.caption || item.category || item.photoOf) ? (
                     <figcaption>
                       {item.category ? <span className="gallery-card__eyebrow">{item.category}</span> : null}
                       {item.caption ? <strong>{item.caption}</strong> : null}
@@ -45,10 +42,7 @@ export const GalleryPage = () => {
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="More moments coming soon"
-              description="Please visit again to see the latest highlights."
-            />
+            <EmptyState title="Gallery is being updated" description="New campus photographs will be published here." />
           )}
         </div>
       </section>

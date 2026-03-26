@@ -2,6 +2,7 @@ import { Course } from '../models/Course.js';
 import { SiteContent } from '../models/SiteContent.js';
 
 const previousDefaultSiteContent = {
+  collegeName: 'Gurukul Mahavidyalay',
   announcementTicker:
     'Admissions, notices, and public updates can be managed from the hidden admin panel after initial setup.',
   hero: {
@@ -38,6 +39,7 @@ const previousDefaultSiteContent = {
       'The college aims to create a disciplined, supportive, and academically sincere environment where students can progress with confidence, dignity, and social awareness.'
   },
   contact: {
+    address: 'Gurukul Mahavidyalay, Khusalpur, District Rampur, Teh. Swar',
     inquiryHeadline: 'Admission and General Inquiry',
     inquiryText: 'Use this form for admission support, course details, and general college communication.'
   }
@@ -45,7 +47,7 @@ const previousDefaultSiteContent = {
 
 const defaultSiteContent = {
   singletonKey: 'site-content',
-  collegeName: 'Gurukul Mahavidyalay',
+  collegeName: 'Gurukul Mahavidhyalya',
   location: 'Khusalpur, District Rampur, Teh. Swar',
   affiliation: 'Guru Jambheshwar University',
   announcementTicker:
@@ -61,37 +63,101 @@ const defaultSiteContent = {
     subheadline: 'Helping students grow with confidence, knowledge, and strong community support.',
     bannerNote: 'Affiliated with Guru Jambheshwar University',
     primaryCtaLabel: 'Apply Now',
-    secondaryCtaLabel: 'View Courses',
+    secondaryCtaLabel: 'Admissions Open',
+    tertiaryCtaLabel: 'Contact Us',
     slides: [
       {
         title: 'A welcoming place to learn',
         subtitle: 'A calm and supportive environment for every student.',
-        image: '/placeholders/hero-1.svg'
+        image: '/placeholders/hero-1.svg',
+        imagePublicId: ''
       },
       {
         title: 'Simple admission guidance',
         subtitle: 'Important details are easy to find when you need them.',
-        image: '/placeholders/hero-2.svg'
+        image: '/placeholders/hero-2.svg',
+        imagePublicId: ''
       },
       {
         title: 'Campus life and achievements',
         subtitle: 'Explore key updates, notices, and memorable moments.',
-        image: '/placeholders/hero-3.svg'
+        image: '/placeholders/hero-3.svg',
+        imagePublicId: ''
       }
     ]
   },
   branding: {
     websiteLogoUrl: '/logo-mark.svg',
-    websiteLogoPublicId: '',
-    managementLogoUrl: '',
-    managementLogoPublicId: '',
-    managementLogoTitle: 'Management Logo'
+    websiteLogoPublicId: ''
   },
   socialLinks: {
     facebook: '',
     instagram: '',
     youtube: '',
     whatsapp: ''
+  },
+  homepage: {
+    facilities: [
+      {
+        title: 'Library',
+        badge: 'LB',
+        description:
+          'Quiet reading support with reference material, guided study time, and subject access for undergraduate learning.'
+      },
+      {
+        title: 'Labs',
+        badge: 'LM',
+        description:
+          'Practical learning spaces that support subject work, demonstrations, and everyday academic preparation.'
+      },
+      {
+        title: 'Hostel Support',
+        badge: 'HS',
+        description:
+          'Student support services focused on comfort, discipline, and a dependable study environment when needed.'
+      },
+      {
+        title: 'Sports',
+        badge: 'SP',
+        description:
+          'Physical activity, recreation, and participation-focused campus culture to support confidence and wellbeing.'
+      }
+    ],
+    admissionSteps: [
+      {
+        title: 'Submit Application',
+        description: 'Complete the admission form with personal details, marks, subjects, and contact information.'
+      },
+      {
+        title: 'Document Review',
+        description: 'The college team reviews eligibility, submitted records, and the selected academic combination.'
+      },
+      {
+        title: 'Confirmation',
+        description: 'Applicants receive guidance for the next step, including verification, contact, and admission communication.'
+      },
+      {
+        title: 'Start the Session',
+        description: 'Once confirmed, students can follow notices, academic updates, and the beginning of the programme cycle.'
+      }
+    ],
+    testimonials: [
+      {
+        name: 'Student Voice',
+        role: 'Undergraduate Student',
+        quote: 'The admission process is simple to follow and the college communication remains clear and dependable.'
+      },
+      {
+        name: 'Parent Feedback',
+        role: 'College Community',
+        quote: 'Important updates, academic guidance, and contact details are easy to understand and access.'
+      },
+      {
+        name: 'Alumni Perspective',
+        role: 'Graduate',
+        quote: 'A disciplined environment and consistent guidance help students move forward with confidence.'
+      }
+    ]
   },
   motivation: {
     enabled: false,
@@ -102,17 +168,25 @@ const defaultSiteContent = {
   },
   about: {
     introduction:
-      'Gurukul Mahavidyalay supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
+      'Gurukul Mahavidhyalya supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
     mission: 'To guide students toward strong values, clear thinking, and meaningful growth.',
     vision: 'To be a trusted college known for learning, discipline, and opportunity.',
     principalName: 'Principal',
     principalDesignation: 'Principal',
     principalMessage:
       'We believe every student deserves guidance, respect, and the confidence to move forward in life with purpose.',
-    principalImage: '/placeholders/principal-placeholder.svg'
+    principalImage: '/placeholders/principal-placeholder.svg',
+    principalImagePublicId: '',
+    ceoName: 'Chief Executive Officer',
+    ceoDesignation: 'CEO',
+    ceoMessage:
+      'Add a dedicated CEO message from the admin panel to highlight leadership, vision, and institutional direction.',
+    ceoImage: '',
+    ceoImagePublicId: '',
+    managementProfiles: []
   },
   contact: {
-    address: 'Gurukul Mahavidyalay, Khusalpur, District Rampur, Teh. Swar',
+    address: 'Gurukul Mahavidhyalya, Khusalpur, District Rampur, Teh. Swar',
     phone: '',
     email: '',
     mapEmbedUrl: '',
@@ -166,7 +240,7 @@ const useFreshCopy = (currentValue, oldValue, newValue) => {
 const updateExistingSiteCopy = async (siteContent) => {
   let changed = false;
 
-  const topLevelFields = ['announcementTicker'];
+  const topLevelFields = ['collegeName', 'announcementTicker'];
   for (const field of topLevelFields) {
     const nextValue = useFreshCopy(siteContent[field], previousDefaultSiteContent[field], defaultSiteContent[field]);
     if (nextValue !== siteContent[field]) {
@@ -182,6 +256,15 @@ const updateExistingSiteCopy = async (siteContent) => {
       previousDefaultSiteContent.hero[field],
       defaultSiteContent.hero[field]
     );
+    if (nextValue !== siteContent.hero?.[field]) {
+      siteContent.hero[field] = nextValue;
+      changed = true;
+    }
+  }
+
+  const heroPresenceFields = ['primaryCtaLabel', 'secondaryCtaLabel', 'tertiaryCtaLabel'];
+  for (const field of heroPresenceFields) {
+    const nextValue = useFreshCopy(siteContent.hero?.[field], field === 'secondaryCtaLabel' ? 'View Courses' : '', defaultSiteContent.hero[field]);
     if (nextValue !== siteContent.hero?.[field]) {
       siteContent.hero[field] = nextValue;
       changed = true;
@@ -205,6 +288,16 @@ const updateExistingSiteCopy = async (siteContent) => {
         changed = true;
       }
     });
+
+    if (!currentSlide.image) {
+      currentSlide.image = slide.image;
+      changed = true;
+    }
+
+    if (currentSlide.imagePublicId === undefined) {
+      currentSlide.imagePublicId = '';
+      changed = true;
+    }
   });
 
   const aboutFields = ['introduction', 'mission', 'vision', 'principalMessage'];
@@ -228,7 +321,44 @@ const updateExistingSiteCopy = async (siteContent) => {
     }
   }
 
-  const contactFields = ['inquiryHeadline', 'inquiryText'];
+  const aboutPresenceFields = [
+    'principalImage',
+    'principalImagePublicId',
+    'ceoName',
+    'ceoDesignation',
+    'ceoMessage',
+    'ceoImage',
+    'ceoImagePublicId'
+  ];
+  for (const field of aboutPresenceFields) {
+    if (siteContent.about?.[field] === undefined) {
+      siteContent.about[field] = defaultSiteContent.about[field];
+      changed = true;
+    }
+  }
+
+  if (!Array.isArray(siteContent.about?.managementProfiles)) {
+    siteContent.about.managementProfiles = [];
+    changed = true;
+  } else {
+    siteContent.about.managementProfiles = siteContent.about.managementProfiles.map((profile, index) => {
+      const nextProfile = {
+        ...profile.toObject?.(),
+        ...profile,
+        work: profile.work ?? profile.designation ?? '',
+        experience: profile.experience ?? profile.message ?? '',
+        displayOrder: Number.isFinite(Number(profile.displayOrder)) ? Number(profile.displayOrder) : index
+      };
+
+      if (nextProfile.work !== profile.work || nextProfile.experience !== profile.experience) {
+        changed = true;
+      }
+
+      return nextProfile;
+    });
+  }
+
+  const contactFields = ['address', 'inquiryHeadline', 'inquiryText'];
   for (const field of contactFields) {
     const nextValue = useFreshCopy(
       siteContent.contact?.[field],
@@ -249,6 +379,26 @@ const updateExistingSiteCopy = async (siteContent) => {
   if (!siteContent.socialLinks) {
     siteContent.socialLinks = defaultSiteContent.socialLinks;
     changed = true;
+  }
+
+  if (!siteContent.homepage) {
+    siteContent.homepage = defaultSiteContent.homepage;
+    changed = true;
+  } else {
+    if (!Array.isArray(siteContent.homepage.facilities)) {
+      siteContent.homepage.facilities = defaultSiteContent.homepage.facilities;
+      changed = true;
+    }
+
+    if (!Array.isArray(siteContent.homepage.admissionSteps)) {
+      siteContent.homepage.admissionSteps = defaultSiteContent.homepage.admissionSteps;
+      changed = true;
+    }
+
+    if (!Array.isArray(siteContent.homepage.testimonials)) {
+      siteContent.homepage.testimonials = defaultSiteContent.homepage.testimonials;
+      changed = true;
+    }
   }
 
   if (!siteContent.motivation) {
