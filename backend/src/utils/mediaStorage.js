@@ -3,11 +3,7 @@ import { saveUploadedFile } from './fileStorage.js';
 
 export const uploadImage = async (input) => {
   if (isCloudinaryConfigured()) {
-    try {
-      return await uploadImageToCloudinary(input);
-    } catch {
-      return saveUploadedFile(input);
-    }
+    return uploadImageToCloudinary(input);
   }
 
   return saveUploadedFile(input);
