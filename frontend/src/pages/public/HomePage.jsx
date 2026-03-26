@@ -1,5 +1,5 @@
 import { Link, useOutletContext } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, formatDate, isPlaceholderMedia, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { SectionHeading } from '../../components/SectionHeading';
@@ -91,7 +91,6 @@ const defaultTestimonials = [
 export const HomePage = () => {
   const { site: sharedSite } = useOutletContext();
   const [data, setData] = useState(null);
-  const [activeSlide, setActiveSlide] = useState(0);
   const [activeManagementSlide, setActiveManagementSlide] = useState(0);
 
   useEffect(() => {
@@ -105,10 +104,6 @@ export const HomePage = () => {
 
   const site = data?.site || sharedSite;
   const homeData = data || { site, courses: [], notifications: [], gallery: [], popup: null };
-  const slides = useMemo(() => {
-    const siteSlides = site?.hero?.slides || [];
-    return siteSlides.length ? siteSlides : [{ title: site?.collegeName || 'Gurukul Mahavidhyalya', subtitle: '', image: '' }];
-  }, [site]);
   const courses = homeData.courses || [];
   const featuredCourse = courses[0] || null;
   const coursesPreview = courses.slice(0, 3);
@@ -127,18 +122,7 @@ export const HomePage = () => {
         ]
       : [];
   const gallery = homeData.gallery || [];
-  const galleryPreview = gallery.length
-    ? gallery.slice(0, 4)
-    : slides
-        .filter((slide) => slide.image && !isPlaceholderMedia(slide.image))
-        .slice(0, 4)
-        .map((slide, index) => ({
-          _id: `hero-slide-${index}`,
-          imageUrl: slide.image,
-          category: 'Campus',
-          caption: slide.title,
-          photoOf: slide.subtitle
-        }));
+  const galleryPreview = gallery.length ? gallery.slice(0, 4) : [];
   const managementProfiles = [...(site?.about?.managementProfiles || [])]
     .filter((profile) => {
       const hasImage = profile?.imageUrl && !isPlaceholderMedia(profile.imageUrl);
@@ -196,18 +180,6 @@ export const HomePage = () => {
   ];
 
   useEffect(() => {
-    if (slides.length <= 1) {
-      return undefined;
-    }
-
-    const interval = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % slides.length);
-    }, 5000);
-
-    return () => window.clearInterval(interval);
-  }, [slides.length]);
-
-  useEffect(() => {
     if (managementProfiles.length <= 1) {
       setActiveManagementSlide(0);
       return undefined;
@@ -238,18 +210,15 @@ export const HomePage = () => {
       <AdvertisementPopup popup={homeData.popup} />
 
       <section className="hero hero--homepage">
-        <div className="hero__media">
-          {slides.map((slide, index) => {
-            const hasRealImage = slide.image && !isPlaceholderMedia(slide.image);
-            return (
-              <div
-                key={`${slide.title}-${slide.image || index}`}
-                className={`hero__slide ${index === activeSlide ? 'hero__slide--active' : ''} ${hasRealImage ? '' : 'hero__slide--fallback'}`.trim()}
-                style={hasRealImage ? { backgroundImage: `url(${resolveMediaUrl(slide.image)})` } : undefined}
-              />
-            );
-          })}
-          <div className="hero__overlay" />
+        <div className="hero__backdrop" aria-hidden="true">
+          <div className="hero__backdrop-glow hero__backdrop-glow--primary" />
+          <div className="hero__backdrop-glow hero__backdrop-glow--secondary" />
+          <img
+            src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
+            alt=""
+            className="hero__backdrop-mark"
+            decoding="async"
+          />
         </div>
 
         <div className="container hero__content">

@@ -25,13 +25,7 @@ const mapSiteToForm = (site) => ({
     bannerNote: site.hero?.bannerNote || '',
     primaryCtaLabel: site.hero?.primaryCtaLabel || 'Apply Now',
     secondaryCtaLabel: site.hero?.secondaryCtaLabel || 'Admissions Open',
-    tertiaryCtaLabel: site.hero?.tertiaryCtaLabel || 'Contact Us',
-    slides: (site.hero?.slides || []).map((slide) => ({
-      title: slide.title || '',
-      subtitle: slide.subtitle || '',
-      image: slide.image || '',
-      imagePublicId: slide.imagePublicId || ''
-    }))
+    tertiaryCtaLabel: site.hero?.tertiaryCtaLabel || 'Contact Us'
   },
   branding: {
     websiteLogoUrl: site.branding?.websiteLogoUrl || '/logo-mark.svg'
@@ -294,39 +288,6 @@ export const SiteSettingsPage = () => {
               />
             </label>
           </div>
-        </div>
-
-        <div className="stacked-fields">
-          <div>
-            <h3>Hero Slide Images</h3>
-            <p className="admin-helper-text">These images are used in the top hero area of the home page.</p>
-          </div>
-          {form.hero.slides.map((slide, index) => (
-            <div key={`${slide.image}-${index}`} className="admin-subcard">
-              <div className="form-grid">
-                <div className="form-grid__full media-upload-card">
-                  <span>Slide Image {index + 1}</span>
-                  <div className="media-upload-card__preview media-upload-card__preview--cover">
-                    {slide.image ? (
-                      <img src={resolveMediaUrl(slide.image)} alt={`Slide ${index + 1} preview`} />
-                    ) : (
-                      <p>Current slide image will stay until you replace it from file chooser.</p>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    accept={acceptedImageTypes}
-                    disabled={Boolean(mediaStatus.uploading)}
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      await handleMediaUpload('heroSlideImage', file, { slideIndex: index });
-                      event.target.value = '';
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
 
         <div className="stacked-fields">

@@ -115,24 +115,6 @@ const getDynamicSiteMediaField = (siteContent, field, body) => {
     };
   }
 
-  if (field === 'heroSlideImage') {
-    const slideIndex = Number.parseInt(body.slideIndex, 10);
-    if (Number.isNaN(slideIndex) || slideIndex < 0 || slideIndex >= siteContent.hero.slides.length) {
-      return null;
-    }
-
-    const slide = siteContent.hero.slides[slideIndex];
-    return {
-      folderName: 'hero-slides',
-      currentImageUrl: slide.image,
-      currentPublicId: slide.imagePublicId,
-      applyUpload: (uploadedImage) => {
-        slide.image = uploadedImage.imageUrl;
-        slide.imagePublicId = uploadedImage.publicId;
-      }
-    };
-  }
-
   if (field === 'managementProfileImage') {
     const memberId = String(body.memberId || '').trim();
     const profile = siteContent.about.managementProfiles.find((item) => item.id === memberId);

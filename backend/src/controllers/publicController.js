@@ -64,14 +64,7 @@ const sanitizeSite = (site) => ({
     bannerNote: String(site?.hero?.bannerNote || '').trim(),
     primaryCtaLabel: String(site?.hero?.primaryCtaLabel || 'Apply Now').trim(),
     secondaryCtaLabel: String(site?.hero?.secondaryCtaLabel || 'Admissions Open').trim(),
-    tertiaryCtaLabel: String(site?.hero?.tertiaryCtaLabel || 'Contact Us').trim(),
-    slides: (Array.isArray(site?.hero?.slides) ? site.hero.slides : [])
-      .filter((slide) => slide?.title || slide?.subtitle || slide?.image)
-      .map((slide) => ({
-        title: String(slide.title || '').trim(),
-        subtitle: String(slide.subtitle || '').trim(),
-        image: String(slide.image || '').trim()
-      }))
+    tertiaryCtaLabel: String(site?.hero?.tertiaryCtaLabel || 'Contact Us').trim()
   },
   branding: {
     websiteLogoUrl: String(site?.branding?.websiteLogoUrl || '/logo-mark.svg').trim()
