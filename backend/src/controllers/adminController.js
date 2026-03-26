@@ -8,9 +8,9 @@ import { Inquiry } from '../models/Inquiry.js';
 import { Notification } from '../models/Notification.js';
 import { PopupAd } from '../models/PopupAd.js';
 import { SiteContent } from '../models/SiteContent.js';
-import { uploadImageToCloudinary } from '../utils/cloudinary.js';
 import { decryptValue } from '../utils/crypto.js';
 import { deleteUploadedFile } from '../utils/fileStorage.js';
+import { uploadImage } from '../utils/mediaStorage.js';
 
 const cookieName = process.env.COOKIE_NAME || 'gurukul_admin_token';
 
@@ -294,7 +294,7 @@ export const uploadSiteMedia = async (req, res) => {
     return res.status(400).json({ message: 'Invalid media field.' });
   }
 
-  const uploadedImage = await uploadImageToCloudinary({
+  const uploadedImage = await uploadImage({
     buffer: req.file.buffer,
     mimeType: req.file.mimetype,
     originalName: req.file.originalname,
@@ -471,7 +471,7 @@ export const createGalleryItem = async (req, res) => {
     return res.status(400).json({ message: 'Gallery image is required.' });
   }
 
-  const uploadedImage = await uploadImageToCloudinary({
+  const uploadedImage = await uploadImage({
     buffer: req.file.buffer,
     mimeType: req.file.mimetype,
     originalName: req.file.originalname,
@@ -531,7 +531,7 @@ export const upsertPopup = async (req, res) => {
   }
 
   if (req.file) {
-    const uploadedImage = await uploadImageToCloudinary({
+    const uploadedImage = await uploadImage({
       buffer: req.file.buffer,
       mimeType: req.file.mimetype,
       originalName: req.file.originalname,

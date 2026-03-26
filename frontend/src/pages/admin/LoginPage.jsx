@@ -45,6 +45,7 @@ export const LoginPage = () => {
             <input
               type="email"
               value={form.email}
+              autoComplete="username"
               onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               required
             />
@@ -54,6 +55,7 @@ export const LoginPage = () => {
             <input
               type="password"
               value={form.password}
+              autoComplete="current-password"
               onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
               required
             />

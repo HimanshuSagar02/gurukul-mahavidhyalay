@@ -1,12 +1,19 @@
 import { Blob } from 'buffer';
 import crypto from 'crypto';
 
+export const isCloudinaryConfigured = () =>
+  Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME?.trim() &&
+      process.env.CLOUDINARY_API_KEY?.trim() &&
+      process.env.CLOUDINARY_API_SECRET?.trim()
+  );
+
 const getCloudinaryConfig = () => {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim().toLowerCase();
   const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
   const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
 
-  if (!cloudName || !apiKey || !apiSecret) {
+  if (!isCloudinaryConfigured()) {
     throw new Error(
       'Cloudinary configuration is incomplete. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.'
     );
