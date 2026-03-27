@@ -48,10 +48,10 @@ export const PublicFooter = ({ site }) => {
                 decoding="async"
               />
             </span>
-            <h3>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h3>
+            <h3>{site?.collegeName || 'Gurukul Mahavidyalya'}</h3>
           </div>
-          {site?.affiliation ? <p>{site.affiliation}</p> : null}
           {site?.location ? <p>{site.location}</p> : null}
+          {site?.affiliation ? <p>{site.affiliation}</p> : null}
           {socialLinks.length ? (
             <div className="site-footer__socials">
               {socialLinks.map((link) => (
@@ -96,7 +96,7 @@ export const PublicFooter = ({ site }) => {
       </div>
       <div className="site-footer__bottom">
         <div className="container">
-          <p>Copyright (c) {new Date().getFullYear()} {site?.collegeName || 'Gurukul Mahavidhyalya'}. All rights reserved.</p>
+          <p>Copyright (c) {new Date().getFullYear()} {site?.collegeName || 'Gurukul Mahavidyalya'}. All rights reserved.</p>
         </div>
       </div>
     </footer>

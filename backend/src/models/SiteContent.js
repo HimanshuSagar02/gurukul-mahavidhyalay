@@ -40,6 +40,15 @@ const featureItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const metricItemSchema = new mongoose.Schema(
+  {
+    value: { type: String, trim: true, default: '' },
+    label: { type: String, trim: true, default: '' },
+    detail: { type: String, trim: true, default: '' }
+  },
+  { _id: false }
+);
+
 const testimonialSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true, default: '' },
@@ -111,6 +120,10 @@ const siteContentSchema = new mongoose.Schema(
       default: () => ({})
     },
     homepage: {
+      highlights: {
+        type: [metricItemSchema],
+        default: []
+      },
       facilities: {
         type: [featureItemSchema],
         default: []

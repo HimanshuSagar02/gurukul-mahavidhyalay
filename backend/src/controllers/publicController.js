@@ -5,6 +5,7 @@ import { Inquiry } from '../models/Inquiry.js';
 import { Notification } from '../models/Notification.js';
 import { PopupAd } from '../models/PopupAd.js';
 import { SiteContent } from '../models/SiteContent.js';
+import { normalizeCollegeSpellingDeep, normalizeSiteIdentityFields } from '../utils/brandCopy.js';
 import { encryptValue } from '../utils/crypto.js';
 
 const getSiteContent = () => SiteContent.findOne({ singletonKey: 'site-content' }).lean();
@@ -24,6 +25,15 @@ const sanitizeFeatureList = (items = []) =>
       title: String(item.title || '').trim(),
       description: String(item.description || '').trim(),
       badge: String(item.badge || '').trim()
+    }));
+
+const sanitizeHighlightList = (items = []) =>
+  (Array.isArray(items) ? items : [])
+    .filter((item) => item?.value || item?.label || item?.detail)
+    .map((item) => ({
+      value: String(item.value || '').trim(),
+      label: String(item.label || '').trim(),
+      detail: String(item.detail || '').trim()
     }));
 
 const sanitizeTestimonials = (items = []) =>
@@ -52,106 +62,120 @@ const sanitizeManagementProfiles = (profiles = []) =>
     }))
     .sort((first, second) => first.displayOrder - second.displayOrder);
 
-const sanitizeSite = (site) => ({
-  collegeName: String(site?.collegeName || '').trim(),
-  location: String(site?.location || '').trim(),
-  affiliation: String(site?.affiliation || '').trim(),
-  announcementTicker: String(site?.announcementTicker || '').trim(),
-  headerLinks: sanitizeLinkList(site?.headerLinks),
-  hero: {
-    headline: String(site?.hero?.headline || '').trim(),
-    subheadline: String(site?.hero?.subheadline || '').trim(),
-    bannerNote: String(site?.hero?.bannerNote || '').trim(),
-    primaryCtaLabel: String(site?.hero?.primaryCtaLabel || 'Apply Now').trim(),
-    secondaryCtaLabel: String(site?.hero?.secondaryCtaLabel || 'Admissions Open').trim(),
-    tertiaryCtaLabel: String(site?.hero?.tertiaryCtaLabel || 'Contact Us').trim()
-  },
-  branding: {
-    websiteLogoUrl: String(site?.branding?.websiteLogoUrl || '/logo-mark.svg').trim()
-  },
-  socialLinks: {
-    facebook: String(site?.socialLinks?.facebook || '').trim(),
-    instagram: String(site?.socialLinks?.instagram || '').trim(),
-    youtube: String(site?.socialLinks?.youtube || '').trim(),
-    whatsapp: String(site?.socialLinks?.whatsapp || '').trim()
-  },
-  homepage: {
-    facilities: sanitizeFeatureList(site?.homepage?.facilities),
-    admissionSteps: sanitizeFeatureList(site?.homepage?.admissionSteps),
-    testimonials: sanitizeTestimonials(site?.homepage?.testimonials)
-  },
-  motivation: {
-    enabled: Boolean(site?.motivation?.enabled),
-    title: String(site?.motivation?.title || '').trim(),
-    text: String(site?.motivation?.text || '').trim(),
-    imageUrl: String(site?.motivation?.imageUrl || '').trim()
-  },
-  about: {
-    introduction: String(site?.about?.introduction || '').trim(),
-    mission: String(site?.about?.mission || '').trim(),
-    vision: String(site?.about?.vision || '').trim(),
-    principalName: String(site?.about?.principalName || '').trim(),
-    principalDesignation: String(site?.about?.principalDesignation || '').trim(),
-    principalMessage: String(site?.about?.principalMessage || '').trim(),
-    principalImage: String(site?.about?.principalImage || '').trim(),
-    ceoName: String(site?.about?.ceoName || '').trim(),
-    ceoDesignation: String(site?.about?.ceoDesignation || '').trim(),
-    ceoMessage: String(site?.about?.ceoMessage || '').trim(),
-    ceoImage: String(site?.about?.ceoImage || '').trim(),
-    managementProfiles: sanitizeManagementProfiles(site?.about?.managementProfiles)
-  },
-  contact: {
-    address: String(site?.contact?.address || '').trim(),
-    phone: String(site?.contact?.phone || '').trim(),
-    email: String(site?.contact?.email || '').trim(),
-    mapEmbedUrl: String(site?.contact?.mapEmbedUrl || '').trim(),
-    inquiryHeadline: String(site?.contact?.inquiryHeadline || 'Send Us a Message').trim(),
-    inquiryText: String(site?.contact?.inquiryText || '').trim()
-  },
-  footer: {
-    quickLinks: sanitizeLinkList(site?.footer?.quickLinks),
-    exploreLinks: sanitizeLinkList(site?.footer?.exploreLinks)
-  }
-});
+const sanitizeSite = (site) => {
+  const normalizedSite = normalizeCollegeSpellingDeep({
+    collegeName: String(site?.collegeName || '').trim(),
+    location: String(site?.location || '').trim(),
+    affiliation: String(site?.affiliation || '').trim(),
+    announcementTicker: String(site?.announcementTicker || '').trim(),
+    headerLinks: sanitizeLinkList(site?.headerLinks),
+    hero: {
+      headline: String(site?.hero?.headline || '').trim(),
+      subheadline: String(site?.hero?.subheadline || '').trim(),
+      bannerNote: String(site?.hero?.bannerNote || '').trim(),
+      primaryCtaLabel: String(site?.hero?.primaryCtaLabel || 'Apply Now').trim(),
+      secondaryCtaLabel: String(site?.hero?.secondaryCtaLabel || 'Admissions Open').trim(),
+      tertiaryCtaLabel: String(site?.hero?.tertiaryCtaLabel || 'Contact Us').trim()
+    },
+    branding: {
+      websiteLogoUrl: String(site?.branding?.websiteLogoUrl || '/logo-mark.svg').trim()
+    },
+    socialLinks: {
+      facebook: String(site?.socialLinks?.facebook || '').trim(),
+      instagram: String(site?.socialLinks?.instagram || '').trim(),
+      youtube: String(site?.socialLinks?.youtube || '').trim(),
+      whatsapp: String(site?.socialLinks?.whatsapp || '').trim()
+    },
+    homepage: {
+      highlights: sanitizeHighlightList(site?.homepage?.highlights),
+      facilities: sanitizeFeatureList(site?.homepage?.facilities),
+      admissionSteps: sanitizeFeatureList(site?.homepage?.admissionSteps),
+      testimonials: sanitizeTestimonials(site?.homepage?.testimonials)
+    },
+    motivation: {
+      enabled: Boolean(site?.motivation?.enabled),
+      title: String(site?.motivation?.title || '').trim(),
+      text: String(site?.motivation?.text || '').trim(),
+      imageUrl: String(site?.motivation?.imageUrl || '').trim()
+    },
+    about: {
+      introduction: String(site?.about?.introduction || '').trim(),
+      mission: String(site?.about?.mission || '').trim(),
+      vision: String(site?.about?.vision || '').trim(),
+      principalName: String(site?.about?.principalName || '').trim(),
+      principalDesignation: String(site?.about?.principalDesignation || '').trim(),
+      principalMessage: String(site?.about?.principalMessage || '').trim(),
+      principalImage: String(site?.about?.principalImage || '').trim(),
+      ceoName: String(site?.about?.ceoName || '').trim(),
+      ceoDesignation: String(site?.about?.ceoDesignation || '').trim(),
+      ceoMessage: String(site?.about?.ceoMessage || '').trim(),
+      ceoImage: String(site?.about?.ceoImage || '').trim(),
+      managementProfiles: sanitizeManagementProfiles(site?.about?.managementProfiles)
+    },
+    contact: {
+      address: String(site?.contact?.address || '').trim(),
+      phone: String(site?.contact?.phone || '').trim(),
+      email: String(site?.contact?.email || '').trim(),
+      mapEmbedUrl: String(site?.contact?.mapEmbedUrl || '').trim(),
+      inquiryHeadline: String(site?.contact?.inquiryHeadline || 'Send Us a Message').trim(),
+      inquiryText: String(site?.contact?.inquiryText || '').trim()
+    },
+    footer: {
+      quickLinks: sanitizeLinkList(site?.footer?.quickLinks),
+      exploreLinks: sanitizeLinkList(site?.footer?.exploreLinks)
+    }
+  });
+
+  return {
+    ...normalizedSite,
+    ...normalizeSiteIdentityFields(normalizedSite)
+  };
+};
 
 const sanitizeCourses = (courses = []) =>
-  courses.map((course) => ({
-    _id: course._id,
-    title: String(course.title || '').trim(),
-    overview: String(course.overview || '').trim(),
-    duration: String(course.duration || '').trim(),
-    eligibility: String(course.eligibility || '').trim(),
-    subjects: Array.isArray(course.subjects) ? course.subjects.map((subject) => String(subject).trim()).filter(Boolean) : []
-  }));
+  normalizeCollegeSpellingDeep(
+    courses.map((course) => ({
+      _id: course._id,
+      title: String(course.title || '').trim(),
+      overview: String(course.overview || '').trim(),
+      duration: String(course.duration || '').trim(),
+      eligibility: String(course.eligibility || '').trim(),
+      subjects: Array.isArray(course.subjects) ? course.subjects.map((subject) => String(subject).trim()).filter(Boolean) : []
+    }))
+  );
 
 const sanitizeNotifications = (notifications = []) =>
-  notifications.map((notice) => ({
-    _id: notice._id,
-    title: String(notice.title || '').trim(),
-    description: String(notice.description || '').trim(),
-    category: String(notice.category || '').trim(),
-    publishedAt: notice.publishedAt
-  }));
+  normalizeCollegeSpellingDeep(
+    notifications.map((notice) => ({
+      _id: notice._id,
+      title: String(notice.title || '').trim(),
+      description: String(notice.description || '').trim(),
+      category: String(notice.category || '').trim(),
+      publishedAt: notice.publishedAt
+    }))
+  );
 
 const sanitizeGallery = (gallery = []) =>
-  gallery.map((item) => ({
-    _id: item._id,
-    imageUrl: String(item.imageUrl || '').trim(),
-    category: String(item.category || '').trim(),
-    caption: String(item.caption || '').trim(),
-    photoOf: String(item.photoOf || '').trim()
-  }));
+  normalizeCollegeSpellingDeep(
+    gallery.map((item) => ({
+      _id: item._id,
+      imageUrl: String(item.imageUrl || '').trim(),
+      category: String(item.category || '').trim(),
+      caption: String(item.caption || '').trim(),
+      photoOf: String(item.photoOf || '').trim()
+    }))
+  );
 
 const sanitizePopup = (popup) =>
   popup
-    ? {
+    ? normalizeCollegeSpellingDeep({
         _id: popup._id,
         title: String(popup.title || '').trim(),
         imageUrl: String(popup.imageUrl || '').trim(),
         redirectUrl: String(popup.redirectUrl || '').trim(),
         isActive: Boolean(popup.isActive),
         updatedAt: popup.updatedAt
-      }
+      })
     : null;
 
 export const getSiteDetails = async (req, res) => {

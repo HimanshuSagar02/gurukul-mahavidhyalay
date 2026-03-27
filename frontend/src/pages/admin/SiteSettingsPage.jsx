@@ -8,11 +8,109 @@ const createFeatureItem = () => ({
   badge: ''
 });
 
+const createHighlightItem = () => ({
+  value: '',
+  label: '',
+  detail: ''
+});
+
 const createTestimonial = () => ({
   name: '',
   role: '',
   quote: ''
 });
+
+const defaultHighlightItems = [
+  {
+    value: '01',
+    label: 'Programmes',
+    detail: 'Core undergraduate learning options presented clearly for applicants and families.'
+  },
+  {
+    value: '01',
+    label: 'Announcements',
+    detail: 'Admission, examination, and event communication remains visible on the public site.'
+  },
+  {
+    value: '04',
+    label: 'Campus Glimpses',
+    detail: 'A visual record of campus life, academic activity, and institutional moments.'
+  },
+  {
+    value: '01',
+    label: 'Support Channels',
+    detail: 'Direct contact routes for admission queries, calls, and official communication.'
+  }
+];
+
+const defaultFacilityItems = [
+  {
+    title: 'Library',
+    badge: 'LB',
+    description: 'Quiet reading support with reference material, guided study time, and subject access for undergraduate learning.'
+  },
+  {
+    title: 'Labs',
+    badge: 'LM',
+    description: 'Practical learning spaces that support subject work, demonstrations, and everyday academic preparation.'
+  },
+  {
+    title: 'Hostel Support',
+    badge: 'HS',
+    description: 'Student support services focused on comfort, discipline, and a dependable study environment when needed.'
+  },
+  {
+    title: 'Sports',
+    badge: 'SP',
+    description: 'Physical activity, recreation, and participation-focused campus culture to support confidence and wellbeing.'
+  }
+];
+
+const defaultAdmissionSteps = [
+  {
+    title: 'Submit Application',
+    description: 'Complete the admission form with personal details, marks, subjects, and contact information.',
+    badge: ''
+  },
+  {
+    title: 'Document Review',
+    description: 'The college team reviews eligibility, submitted records, and the selected academic combination.',
+    badge: ''
+  },
+  {
+    title: 'Confirmation',
+    description: 'Applicants receive guidance for the next step, including verification, contact, and admission communication.',
+    badge: ''
+  },
+  {
+    title: 'Start the Session',
+    description: 'Once confirmed, students can follow notices, academic updates, and the beginning of the programme cycle.',
+    badge: ''
+  }
+];
+
+const defaultTestimonials = [
+  {
+    name: 'Student Voice',
+    role: 'Undergraduate Student',
+    quote: 'The admission process is simple to follow and the college communication remains clear and dependable.'
+  },
+  {
+    name: 'Parent Feedback',
+    role: 'College Community',
+    quote: 'Important updates, academic guidance, and contact details are easy to understand and access.'
+  },
+  {
+    name: 'Alumni Perspective',
+    role: 'Graduate',
+    quote: 'A disciplined environment and consistent guidance help students move forward with confidence.'
+  }
+];
+
+const withFallbackItems = (items, fallbackItems) => {
+  const source = Array.isArray(items) && items.length ? items : fallbackItems;
+  return source.map((item) => ({ ...item }));
+};
 
 const mapSiteToForm = (site) => ({
   collegeName: site.collegeName || '',
@@ -37,17 +135,22 @@ const mapSiteToForm = (site) => ({
     whatsapp: site.socialLinks?.whatsapp || ''
   },
   homepage: {
-    facilities: (site.homepage?.facilities || []).map((item) => ({
+    highlights: withFallbackItems(site.homepage?.highlights, defaultHighlightItems).map((item) => ({
+      value: item.value || '',
+      label: item.label || '',
+      detail: item.detail || ''
+    })),
+    facilities: withFallbackItems(site.homepage?.facilities, defaultFacilityItems).map((item) => ({
       title: item.title || '',
       description: item.description || '',
       badge: item.badge || ''
     })),
-    admissionSteps: (site.homepage?.admissionSteps || []).map((item) => ({
+    admissionSteps: withFallbackItems(site.homepage?.admissionSteps, defaultAdmissionSteps).map((item) => ({
       title: item.title || '',
       description: item.description || '',
       badge: item.badge || ''
     })),
-    testimonials: (site.homepage?.testimonials || []).map((item) => ({
+    testimonials: withFallbackItems(site.homepage?.testimonials, defaultTestimonials).map((item) => ({
       name: item.name || '',
       role: item.role || '',
       quote: item.quote || ''
@@ -293,7 +396,113 @@ export const SiteSettingsPage = () => {
         <div className="stacked-fields">
           <div className="stacked-list__row stacked-list__row--start">
             <div>
-              <h3>Facilities Section</h3>
+              <h3>Campus Highlights Section</h3>
+              <p className="admin-helper-text">These highlight cards are shown in the Campus Highlights section on the home page.</p>
+            </div>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  homepage: {
+                    ...current.homepage,
+                    highlights: [...current.homepage.highlights, createHighlightItem()]
+                  }
+                }))
+              }
+            >
+              Add Highlight
+            </button>
+          </div>
+
+          {form.homepage.highlights.length ? (
+            form.homepage.highlights.map((item, index) => (
+              <div key={`highlight-${index}`} className="admin-subcard form-card">
+                <div className="stacked-list__row stacked-list__row--start">
+                  <h3>Highlight {index + 1}</h3>
+                  <button
+                    type="button"
+                    className="button button--danger"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        homepage: {
+                          ...current.homepage,
+                          highlights: current.homepage.highlights.filter((_, itemIndex) => itemIndex !== index)
+                        }
+                      }))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    <span>Value</span>
+                    <input
+                      maxLength={8}
+                      value={item.value}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            highlights: current.homepage.highlights.map((highlight, itemIndex) =>
+                              itemIndex === index ? { ...highlight, value: event.target.value } : highlight
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Label</span>
+                    <input
+                      value={item.label}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            highlights: current.homepage.highlights.map((highlight, itemIndex) =>
+                              itemIndex === index ? { ...highlight, label: event.target.value } : highlight
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="form-grid__full">
+                    <span>Description</span>
+                    <textarea
+                      rows="4"
+                      value={item.detail}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          homepage: {
+                            ...current.homepage,
+                            highlights: current.homepage.highlights.map((highlight, itemIndex) =>
+                              itemIndex === index ? { ...highlight, detail: event.target.value } : highlight
+                            )
+                          }
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="admin-helper-text">No campus highlights added yet.</p>
+          )}
+        </div>
+
+        <div className="stacked-fields">
+          <div className="stacked-list__row stacked-list__row--start">
+            <div>
+              <h3>Campus Facilities Section</h3>
               <p className="admin-helper-text">These facility cards are shown on the home page.</p>
             </div>
             <button

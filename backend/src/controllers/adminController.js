@@ -8,6 +8,7 @@ import { Inquiry } from '../models/Inquiry.js';
 import { Notification } from '../models/Notification.js';
 import { PopupAd } from '../models/PopupAd.js';
 import { SiteContent } from '../models/SiteContent.js';
+import { normalizeCollegeSpelling, normalizeCollegeSpellingDeep, normalizeSiteIdentityFields } from '../utils/brandCopy.js';
 import { decryptValue } from '../utils/crypto.js';
 import { deleteUploadedFile } from '../utils/fileStorage.js';
 import { uploadImage } from '../utils/mediaStorage.js';
@@ -21,6 +22,12 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000
 };
 
+const clearCookieOptions = {
+  httpOnly: cookieOptions.httpOnly,
+  sameSite: cookieOptions.sameSite,
+  secure: cookieOptions.secure
+};
+
 const createToken = (adminId) =>
   jwt.sign({ id: adminId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
@@ -28,6 +35,18 @@ const createToken = (adminId) =>
 
 const getSiteContent = () => SiteContent.findOne({ singletonKey: 'site-content' });
 const asPlainObject = (value) => (value?.toObject ? value.toObject() : value || {});
+const normalizeSitePayload = (value) => {
+  const normalized = normalizeCollegeSpellingDeep(value);
+
+  if (!normalized || typeof normalized !== 'object' || Array.isArray(normalized)) {
+    return normalized;
+  }
+
+  return {
+    ...normalized,
+    ...normalizeSiteIdentityFields(normalized)
+  };
+};
 
 const siteMediaFieldMap = {
   websiteLogo: {
@@ -67,6 +86,15 @@ const normalizeFeatureList = (items = []) =>
       title: String(item.title || '').trim(),
       description: String(item.description || '').trim(),
       badge: String(item.badge || '').trim().slice(0, 4)
+    }));
+
+const normalizeHighlightList = (items = []) =>
+  items
+    .filter((item) => item && (item.value || item.label || item.detail))
+    .map((item) => ({
+      value: String(item.value || '').trim().slice(0, 8),
+      label: String(item.label || '').trim(),
+      detail: String(item.detail || '').trim()
     }));
 
 const normalizeTestimonials = (items = []) =>
@@ -169,7 +197,7 @@ export const loginAdmin = async (req, res) => {
 };
 
 export const logoutAdmin = async (req, res) => {
-  res.clearCookie(cookieName, cookieOptions);
+  res.clearCookie(cookieName, clearCookieOptions);
   res.json({ message: 'Logged out successfully.' });
 };
 
@@ -208,26 +236,27 @@ export const getDashboard = async (req, res) => {
 
 export const getAdminSiteContent = async (req, res) => {
   const siteContent = await getSiteContent();
-  res.json(siteContent);
+  res.json(normalizeSitePayload(siteContent.toObject()));
 };
 
 export const updateGeneralContent = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   const siteContent = await getSiteContent();
   const currentHero = asPlainObject(siteContent.hero);
   const currentBranding = asPlainObject(siteContent.branding);
   const currentSocialLinks = asPlainObject(siteContent.socialLinks);
   const currentHomepage = asPlainObject(siteContent.homepage);
   const currentMotivation = asPlainObject(siteContent.motivation);
-  const nextHero = req.body.hero || {};
-  const nextHomepage = req.body.homepage || {};
+  const nextHero = payload.hero || {};
+  const nextHomepage = payload.homepage || {};
 
   Object.assign(siteContent, {
-    collegeName: req.body.collegeName?.trim() || siteContent.collegeName,
-    location: req.body.location?.trim() || siteContent.location,
-    affiliation: req.body.affiliation?.trim() || siteContent.affiliation,
-    announcementTicker: req.body.announcementTicker?.trim() ?? siteContent.announcementTicker,
-    headerLinks: Array.isArray(req.body.headerLinks) ? req.body.headerLinks : siteContent.headerLinks,
-    footer: req.body.footer || siteContent.footer,
+    collegeName: payload.collegeName?.trim() || siteContent.collegeName,
+    location: payload.location?.trim() || siteContent.location,
+    affiliation: payload.affiliation?.trim() || siteContent.affiliation,
+    announcementTicker: payload.announcementTicker?.trim() ?? siteContent.announcementTicker,
+    headerLinks: Array.isArray(payload.headerLinks) ? payload.headerLinks : siteContent.headerLinks,
+    footer: payload.footer || siteContent.footer,
     hero: {
       ...currentHero,
       ...nextHero,
@@ -235,15 +264,18 @@ export const updateGeneralContent = async (req, res) => {
     },
     branding: {
       ...currentBranding,
-      ...req.body.branding
+      ...payload.branding
     },
     socialLinks: {
       ...currentSocialLinks,
-      ...req.body.socialLinks
+      ...payload.socialLinks
     },
     homepage: {
       ...currentHomepage,
       ...nextHomepage,
+      highlights: Array.isArray(nextHomepage.highlights)
+        ? normalizeHighlightList(nextHomepage.highlights)
+        : currentHomepage.highlights,
       facilities: Array.isArray(nextHomepage.facilities)
         ? normalizeFeatureList(nextHomepage.facilities)
         : currentHomepage.facilities,
@@ -256,12 +288,16 @@ export const updateGeneralContent = async (req, res) => {
     },
     motivation: {
       ...currentMotivation,
-      ...req.body.motivation
+      ...payload.motivation
     }
   });
 
+  const repairedIdentity = normalizeSiteIdentityFields(siteContent);
+  siteContent.location = repairedIdentity.location || siteContent.location;
+  siteContent.affiliation = repairedIdentity.affiliation || siteContent.affiliation;
+
   await siteContent.save();
-  res.json(siteContent);
+  res.json(normalizeSitePayload(siteContent.toObject()));
 };
 
 export const uploadSiteMedia = async (req, res) => {
@@ -291,10 +327,11 @@ export const uploadSiteMedia = async (req, res) => {
 };
 
 export const updateAboutContent = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   const siteContent = await getSiteContent();
   const currentAbout = asPlainObject(siteContent.about);
-  const nextProfiles = Array.isArray(req.body.managementProfiles)
-    ? normalizeManagementProfiles(req.body.managementProfiles, currentAbout.managementProfiles)
+  const nextProfiles = Array.isArray(payload.managementProfiles)
+    ? normalizeManagementProfiles(payload.managementProfiles, currentAbout.managementProfiles)
     : currentAbout.managementProfiles;
   const removedProfiles = (currentAbout.managementProfiles || []).filter(
     (profile) => profile?.id && !nextProfiles.some((item) => item.id === profile.id)
@@ -306,41 +343,43 @@ export const updateAboutContent = async (req, res) => {
 
   siteContent.about = {
     ...currentAbout,
-    ...req.body,
-    principalImagePublicId: req.body.principalImagePublicId ?? currentAbout.principalImagePublicId ?? '',
-    ceoImagePublicId: req.body.ceoImagePublicId ?? currentAbout.ceoImagePublicId ?? '',
+    ...payload,
+    principalImagePublicId: payload.principalImagePublicId ?? currentAbout.principalImagePublicId ?? '',
+    ceoImagePublicId: payload.ceoImagePublicId ?? currentAbout.ceoImagePublicId ?? '',
     managementProfiles: nextProfiles
   };
 
   await siteContent.save();
-  res.json(siteContent.about);
+  res.json(normalizeCollegeSpellingDeep(siteContent.about.toObject ? siteContent.about.toObject() : siteContent.about));
 };
 
 export const updateContactContent = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   const siteContent = await getSiteContent();
   siteContent.contact = {
     ...siteContent.contact.toObject(),
-    ...req.body
+    ...payload
   };
 
   await siteContent.save();
-  res.json(siteContent.contact);
+  res.json(normalizeCollegeSpellingDeep(siteContent.contact.toObject ? siteContent.contact.toObject() : siteContent.contact));
 };
 
 export const listCourses = async (req, res) => {
   const courses = await Course.find().sort({ createdAt: 1 });
-  res.json(courses);
+  res.json(normalizeCollegeSpellingDeep(courses.map((course) => course.toObject())));
 };
 
 export const createCourse = async (req, res) => {
-  const { title, overview, duration, eligibility, subjects } = req.body;
+  const payload = normalizeCollegeSpellingDeep(req.body);
+  const { title, overview, duration, eligibility, subjects } = payload;
 
   if (!title || !overview) {
     return res.status(400).json({ message: 'Course title and overview are required.' });
   }
 
   const slug =
-    req.body.slug?.trim().toLowerCase() ||
+    payload.slug?.trim().toLowerCase() ||
     title
       .trim()
       .toLowerCase()
@@ -361,10 +400,11 @@ export const createCourse = async (req, res) => {
     subjects: Array.isArray(subjects) ? subjects : []
   });
 
-  res.status(201).json(course);
+  res.status(201).json(normalizeCollegeSpellingDeep(course.toObject()));
 };
 
 export const updateCourse = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   const course = await Course.findById(req.params.id);
 
   if (!course) {
@@ -372,15 +412,15 @@ export const updateCourse = async (req, res) => {
   }
 
   Object.assign(course, {
-    title: req.body.title?.trim() || course.title,
-    overview: req.body.overview?.trim() || course.overview,
-    duration: req.body.duration?.trim() ?? course.duration,
-    eligibility: req.body.eligibility?.trim() ?? course.eligibility,
-    subjects: Array.isArray(req.body.subjects) ? req.body.subjects : course.subjects
+    title: payload.title?.trim() || course.title,
+    overview: payload.overview?.trim() || course.overview,
+    duration: payload.duration?.trim() ?? course.duration,
+    eligibility: payload.eligibility?.trim() ?? course.eligibility,
+    subjects: Array.isArray(payload.subjects) ? payload.subjects : course.subjects
   });
 
   await course.save();
-  res.json(course);
+  res.json(normalizeCollegeSpellingDeep(course.toObject()));
 };
 
 export const deleteCourse = async (req, res) => {
@@ -395,11 +435,12 @@ export const deleteCourse = async (req, res) => {
 
 export const listNotifications = async (req, res) => {
   const notices = await Notification.find().sort({ publishedAt: -1 });
-  res.json(notices);
+  res.json(normalizeCollegeSpellingDeep(notices.map((notice) => notice.toObject())));
 };
 
 export const createNotification = async (req, res) => {
-  const { title, description, category, publishedAt } = req.body;
+  const payload = normalizeCollegeSpellingDeep(req.body);
+  const { title, description, category, publishedAt } = payload;
 
   if (!title) {
     return res.status(400).json({ message: 'Notification title is required.' });
@@ -412,10 +453,11 @@ export const createNotification = async (req, res) => {
     publishedAt: publishedAt || Date.now()
   });
 
-  res.status(201).json(notification);
+  res.status(201).json(normalizeCollegeSpellingDeep(notification.toObject()));
 };
 
 export const updateNotification = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   const notification = await Notification.findById(req.params.id);
 
   if (!notification) {
@@ -423,14 +465,14 @@ export const updateNotification = async (req, res) => {
   }
 
   Object.assign(notification, {
-    title: req.body.title?.trim() || notification.title,
-    description: req.body.description?.trim() ?? notification.description,
-    category: req.body.category?.trim() ?? notification.category,
-    publishedAt: req.body.publishedAt || notification.publishedAt
+    title: payload.title?.trim() || notification.title,
+    description: payload.description?.trim() ?? notification.description,
+    category: payload.category?.trim() ?? notification.category,
+    publishedAt: payload.publishedAt || notification.publishedAt
   });
 
   await notification.save();
-  res.json(notification);
+  res.json(normalizeCollegeSpellingDeep(notification.toObject()));
 };
 
 export const deleteNotification = async (req, res) => {
@@ -445,13 +487,17 @@ export const deleteNotification = async (req, res) => {
 
 export const listGalleryItems = async (req, res) => {
   const galleryItems = await GalleryItem.find().sort({ displayOrder: 1, createdAt: -1 });
-  res.json(galleryItems);
+  res.json(normalizeCollegeSpellingDeep(galleryItems.map((item) => item.toObject())));
 };
 
 export const createGalleryItem = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'Gallery image is required.' });
   }
+
+  const category = normalizeCollegeSpelling(req.body.category?.trim() || '');
+  const caption = normalizeCollegeSpelling(req.body.caption?.trim() || '');
+  const photoOf = normalizeCollegeSpelling(req.body.photoOf?.trim() || '');
 
   const uploadedImage = await uploadImage({
     buffer: req.file.buffer,
@@ -462,13 +508,13 @@ export const createGalleryItem = async (req, res) => {
   const item = await GalleryItem.create({
     imageUrl: uploadedImage.imageUrl,
     cloudinaryPublicId: uploadedImage.publicId,
-    category: req.body.category?.trim() || '',
-    caption: req.body.caption?.trim() || '',
-    photoOf: req.body.photoOf?.trim() || '',
+    category,
+    caption,
+    photoOf,
     displayOrder: Number(req.body.displayOrder || 0)
   });
 
-  res.status(201).json(item);
+  res.status(201).json(normalizeCollegeSpellingDeep(item.toObject()));
 };
 
 export const deleteGalleryItem = async (req, res) => {
@@ -496,16 +542,19 @@ export const listAdmissions = async (req, res) => {
 export const getPopup = async (req, res) => {
   const popup = await PopupAd.findOne().sort({ updatedAt: -1 });
   res.json(
-    popup || {
-      title: 'Latest Update',
-      imageUrl: '',
-      redirectUrl: '',
-      isActive: false
-    }
+    normalizeCollegeSpellingDeep(
+      popup?.toObject() || {
+        title: 'Latest Update',
+        imageUrl: '',
+        redirectUrl: '',
+        isActive: false
+      }
+    )
   );
 };
 
 export const upsertPopup = async (req, res) => {
+  const payload = normalizeCollegeSpellingDeep(req.body);
   let popup = await PopupAd.findOne().sort({ updatedAt: -1 });
 
   if (!popup) {
@@ -525,12 +574,12 @@ export const upsertPopup = async (req, res) => {
     popup.cloudinaryPublicId = uploadedImage.publicId;
   }
 
-  popup.title = req.body.title?.trim() || popup.title || 'Latest Update';
-  popup.redirectUrl = req.body.redirectUrl?.trim() || '';
-  popup.isActive = req.body.isActive === 'true' || req.body.isActive === true;
+  popup.title = payload.title?.trim() || popup.title || 'Latest Update';
+  popup.redirectUrl = payload.redirectUrl?.trim() || '';
+  popup.isActive = payload.isActive === 'true' || payload.isActive === true;
 
   await popup.save();
-  res.json(popup);
+  res.json(normalizeCollegeSpellingDeep(popup.toObject()));
 };
 
 export const listInquiries = async (req, res) => {

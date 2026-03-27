@@ -1,5 +1,6 @@
 import { Course } from '../models/Course.js';
 import { SiteContent } from '../models/SiteContent.js';
+import { normalizeCollegeSpelling, normalizeSiteIdentityFields } from '../utils/brandCopy.js';
 
 const previousDefaultSiteContent = {
   collegeName: 'Gurukul Mahavidyalay',
@@ -45,9 +46,55 @@ const previousDefaultSiteContent = {
   }
 };
 
+const previousDefaultHighlightItems = [
+  {
+    value: '01',
+    label: 'Programmes',
+    detail: 'Core undergraduate learning options presented clearly for applicants and families.'
+  },
+  {
+    value: '01',
+    label: 'Announcements',
+    detail: 'Admission, examination, and event communication remains visible on the public site.'
+  },
+  {
+    value: '01',
+    label: 'Campus Glimpses',
+    detail: 'A visual record of campus life, academic activity, and institutional moments.'
+  },
+  {
+    value: '01',
+    label: 'Support Channels',
+    detail: 'Direct contact routes for admission queries, calls, and official communication.'
+  }
+];
+
+const existingDefaultHighlightItems = [
+  {
+    value: '01',
+    label: 'Programmes',
+    detail: 'Core undergraduate learning options presented clearly for applicants and families.'
+  },
+  {
+    value: '01',
+    label: 'Announcements',
+    detail: 'Admission, examination, and event communication remains visible on the public site.'
+  },
+  {
+    value: '02',
+    label: 'Campus Glimpses',
+    detail: 'A visual record of campus life, academic activity, and institutional moments.'
+  },
+  {
+    value: '01',
+    label: 'Support Channels',
+    detail: 'Direct contact routes for admission queries, calls, and official communication.'
+  }
+];
+
 const defaultSiteContent = {
   singletonKey: 'site-content',
-  collegeName: 'Gurukul Mahavidhyalya',
+  collegeName: 'Gurukul Mahavidyalya',
   location: 'Khusalpur, District Rampur, Teh. Swar',
   affiliation: 'Guru Jambheshwar University',
   announcementTicker:
@@ -97,6 +144,28 @@ const defaultSiteContent = {
     whatsapp: ''
   },
   homepage: {
+    highlights: [
+      {
+        value: '01',
+        label: 'Programmes',
+        detail: 'Core undergraduate learning options presented clearly for applicants and families.'
+      },
+      {
+        value: '01',
+        label: 'Announcements',
+        detail: 'Admission, examination, and event communication remains visible on the public site.'
+      },
+      {
+        value: '04',
+        label: 'Campus Glimpses',
+        detail: 'A visual record of campus life, academic activity, and institutional moments.'
+      },
+      {
+        value: '01',
+        label: 'Support Channels',
+        detail: 'Direct contact routes for admission queries, calls, and official communication.'
+      }
+    ],
     facilities: [
       {
         title: 'Library',
@@ -168,7 +237,7 @@ const defaultSiteContent = {
   },
   about: {
     introduction:
-      'Gurukul Mahavidhyalya supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
+      'Gurukul Mahavidyalya supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
     mission: 'To guide students toward strong values, clear thinking, and meaningful growth.',
     vision: 'To be a trusted college known for learning, discipline, and opportunity.',
     principalName: 'Principal',
@@ -186,7 +255,7 @@ const defaultSiteContent = {
     managementProfiles: []
   },
   contact: {
-    address: 'Gurukul Mahavidhyalya, Khusalpur, District Rampur, Teh. Swar',
+    address: 'Gurukul Mahavidyalya, Khusalpur, District Rampur, Teh. Swar',
     phone: '',
     email: '',
     mapEmbedUrl: '',
@@ -235,6 +304,21 @@ const useFreshCopy = (currentValue, oldValue, newValue) => {
   }
 
   return currentValue;
+};
+
+const isSameHighlightList = (currentItems = [], referenceItems = []) => {
+  if (!Array.isArray(currentItems) || currentItems.length !== referenceItems.length) {
+    return false;
+  }
+
+  return currentItems.every((item, index) => {
+    const referenceItem = referenceItems[index];
+    return (
+      String(item?.value || '').trim() === String(referenceItem?.value || '').trim() &&
+      String(item?.label || '').trim() === String(referenceItem?.label || '').trim() &&
+      String(item?.detail || '').trim() === String(referenceItem?.detail || '').trim()
+    );
+  });
 };
 
 const updateExistingSiteCopy = async (siteContent) => {
@@ -385,6 +469,17 @@ const updateExistingSiteCopy = async (siteContent) => {
     siteContent.homepage = defaultSiteContent.homepage;
     changed = true;
   } else {
+    if (!Array.isArray(siteContent.homepage.highlights) || !siteContent.homepage.highlights.length) {
+      siteContent.homepage.highlights = defaultSiteContent.homepage.highlights;
+      changed = true;
+    } else if (
+      isSameHighlightList(siteContent.homepage.highlights, previousDefaultHighlightItems) ||
+      isSameHighlightList(siteContent.homepage.highlights, existingDefaultHighlightItems)
+    ) {
+      siteContent.homepage.highlights = defaultSiteContent.homepage.highlights;
+      changed = true;
+    }
+
     if (!Array.isArray(siteContent.homepage.facilities)) {
       siteContent.homepage.facilities = defaultSiteContent.homepage.facilities;
       changed = true;
@@ -419,6 +514,35 @@ const updateExistingSiteCopy = async (siteContent) => {
       siteContent.motivation.text = nextMotivationText;
       changed = true;
     }
+  }
+
+  const normalizedCollegeName = normalizeCollegeSpelling(siteContent.collegeName);
+  if (normalizedCollegeName !== siteContent.collegeName) {
+    siteContent.collegeName = normalizedCollegeName;
+    changed = true;
+  }
+
+  const normalizedIntroduction = normalizeCollegeSpelling(siteContent.about?.introduction);
+  if (normalizedIntroduction !== siteContent.about?.introduction) {
+    siteContent.about.introduction = normalizedIntroduction;
+    changed = true;
+  }
+
+  const normalizedAddress = normalizeCollegeSpelling(siteContent.contact?.address);
+  if (normalizedAddress !== siteContent.contact?.address) {
+    siteContent.contact.address = normalizedAddress;
+    changed = true;
+  }
+
+  const repairedIdentity = normalizeSiteIdentityFields(siteContent);
+  if (repairedIdentity.location !== siteContent.location) {
+    siteContent.location = repairedIdentity.location;
+    changed = true;
+  }
+
+  if (repairedIdentity.affiliation !== siteContent.affiliation) {
+    siteContent.affiliation = repairedIdentity.affiliation;
+    changed = true;
   }
 
   if (changed) {

@@ -15,8 +15,8 @@ const sanitizePhoneLink = (value = '') => value.replace(/[^\d+]/g, '');
 
 export const PublicHeader = ({ site }) => {
   const utilityItems = [
-    site?.affiliation ? { label: 'Affiliation', value: site.affiliation } : null,
     site?.location ? { label: 'Location', value: site.location } : null,
+    site?.affiliation ? { label: 'Affiliation', value: site.affiliation } : null,
     site?.contact?.phone
       ? { label: 'Phone', value: site.contact.phone, href: `tel:${sanitizePhoneLink(site.contact.phone)}` }
       : null
@@ -37,9 +37,9 @@ export const PublicHeader = ({ site }) => {
             </span>
             <div>
               <p className="brand-header__eyebrow">Official Website</p>
-              <h1>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h1>
-              {site?.affiliation ? <p>{site.affiliation}</p> : null}
+              <h1>{site?.collegeName || 'Gurukul Mahavidyalya'}</h1>
               {site?.location ? <p>{site.location}</p> : null}
+              {site?.affiliation ? <p>{site.affiliation}</p> : null}
             </div>
           </Link>
 

@@ -4,6 +4,9 @@ import { api } from '../api/client';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { PublicFooter } from '../components/public/PublicFooter';
 import { PublicHeader } from '../components/public/PublicHeader';
+import { readCachedJson, writeCachedJson } from '../utils/browserCache';
+
+const PUBLIC_SITE_CACHE_KEY = 'gurukul-public-site-cache-v1';
 
 const upsertMetaTag = (attribute, key, content) => {
   let tag = document.head.querySelector(`meta[${attribute}="${key}"]`);
@@ -43,7 +46,7 @@ const upsertJsonLd = (id, payload) => {
 };
 
 const buildPageSeo = (pathname, site) => {
-  const collegeName = (site?.collegeName || 'Gurukul Mahavidhyalya').trim();
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
   const fullLocation = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
   const brand = shortLocation ? `${collegeName} ${shortLocation}` : collegeName;
@@ -85,7 +88,7 @@ const buildPageSeo = (pathname, site) => {
 
 const buildStructuredData = (site) => {
   const origin = window.location.origin;
-  const collegeName = (site?.collegeName || 'Gurukul Mahavidhyalya').trim();
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
   const location = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const description = site?.hero?.subheadline?.trim() || site?.hero?.headline?.trim() || `${collegeName} admissions, courses, notices, and contact information.`;
   const logoPath = site?.branding?.websiteLogoUrl?.trim();
@@ -133,20 +136,36 @@ const buildStructuredData = (site) => {
 
 export const PublicLayout = () => {
   const location = useLocation();
-  const [site, setSite] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [site, setSite] = useState(() => readCachedJson(PUBLIC_SITE_CACHE_KEY));
+  const [loading, setLoading] = useState(() => !readCachedJson(PUBLIC_SITE_CACHE_KEY));
 
   useEffect(() => {
+    let isActive = true;
+
     const loadSite = async () => {
       try {
-        const data = await api.get('/public/site');
+        const data = await api.get('/public/site', { attempts: 3, retryDelayMs: 450 });
+
+        if (!isActive) {
+          return;
+        }
+
         setSite(data.site);
+        writeCachedJson(PUBLIC_SITE_CACHE_KEY, data.site);
+      } catch {
+        // Keep the last successful site snapshot if the request fails during startup.
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     loadSite();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -165,8 +184,12 @@ export const PublicLayout = () => {
     upsertJsonLd('college-organization', buildStructuredData(site));
   }, [location.pathname, site]);
 
-  if (loading) {
+  if (loading && !site) {
     return <LoadingScreen />;
+  }
+
+  if (!site) {
+    return <LoadingScreen label="Loading website..." />;
   }
 
   return (

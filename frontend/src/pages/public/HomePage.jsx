@@ -4,6 +4,9 @@ import { api, formatDate, isPlaceholderMedia, resolveMediaUrl } from '../../api/
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { SectionHeading } from '../../components/SectionHeading';
 import { AdvertisementPopup } from '../../components/public/AdvertisementPopup';
+import { readCachedJson, writeCachedJson } from '../../utils/browserCache';
+
+const PUBLIC_HOME_CACHE_KEY = 'gurukul-public-home-cache-v1';
 
 const buildLeadershipCard = (eyebrow, title, designation, message, imageUrl) => {
   const safeImageUrl = String(imageUrl || '/placeholders/principal-placeholder.svg').trim();
@@ -20,9 +23,24 @@ const buildLeadershipCard = (eyebrow, title, designation, message, imageUrl) => 
   };
 };
 
-const buildCount = (value) => String(Math.max(0, Number(value) || 0)).padStart(2, '0');
-
 const sanitizePhoneLink = (value = '') => value.replace(/[^\d+]/g, '');
+const buildCount = (value) => String(Math.max(0, Number(value) || 0)).padStart(2, '0');
+const formatDisplayTitle = (value = '') =>
+  String(value || '')
+    .trim()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => {
+      if (/^[A-Z0-9]{2,}$/.test(word) && word.length <= 5) {
+        return word;
+      }
+
+      const lowerWord = word.toLowerCase();
+      return `${lowerWord.charAt(0).toUpperCase()}${lowerWord.slice(1)}`;
+    })
+    .join(' ');
 
 const defaultFacilityItems = [
   {
@@ -90,16 +108,37 @@ const defaultTestimonials = [
 
 export const HomePage = () => {
   const { site: sharedSite } = useOutletContext();
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(() => readCachedJson(PUBLIC_HOME_CACHE_KEY));
+  const [loadingHome, setLoadingHome] = useState(() => !readCachedJson(PUBLIC_HOME_CACHE_KEY));
   const [activeManagementSlide, setActiveManagementSlide] = useState(0);
 
   useEffect(() => {
+    let isActive = true;
+
     const loadHome = async () => {
-      const response = await api.get('/public/home');
-      setData(response);
+      try {
+        const response = await api.get('/public/home', { attempts: 3, retryDelayMs: 450 });
+
+        if (!isActive) {
+          return;
+        }
+
+        setData(response);
+        writeCachedJson(PUBLIC_HOME_CACHE_KEY, response);
+      } catch {
+        // Keep the last successful home snapshot if the request fails during startup.
+      } finally {
+        if (isActive) {
+          setLoadingHome(false);
+        }
+      }
     };
 
     loadHome();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const site = data?.site || sharedSite;
@@ -122,7 +161,7 @@ export const HomePage = () => {
         ]
       : [];
   const gallery = homeData.gallery || [];
-  const galleryPreview = gallery.length ? gallery.slice(0, 4) : [];
+  const galleryPreview = gallery.slice(0, 6);
   const managementProfiles = [...(site?.about?.managementProfiles || [])]
     .filter((profile) => {
       const hasImage = profile?.imageUrl && !isPlaceholderMedia(profile.imageUrl);
@@ -152,32 +191,40 @@ export const HomePage = () => {
       : null,
     site?.contact?.email ? { label: 'Email', value: site.contact.email, href: `mailto:${site.contact.email}` } : null
   ].filter(Boolean);
-  const facilities = site?.homepage?.facilities?.length ? site.homepage.facilities : defaultFacilityItems;
-  const admissionSteps = site?.homepage?.admissionSteps?.length ? site.homepage.admissionSteps : defaultAdmissionSteps;
-  const testimonials = site?.homepage?.testimonials?.length ? site.homepage.testimonials : defaultTestimonials;
-
-  const campusHighlights = [
+  const defaultCampusHighlights = [
     {
-      value: buildCount(courses.length),
+      value: '01',
       label: 'Programmes',
       detail: 'Core undergraduate learning options presented clearly for applicants and families.'
     },
     {
-      value: buildCount(announcementItems.length),
+      value: '01',
       label: 'Announcements',
       detail: 'Admission, examination, and event communication remains visible on the public site.'
     },
     {
-      value: buildCount(galleryPreview.length),
+      value: '04',
       label: 'Campus Glimpses',
       detail: 'A visual record of campus life, academic activity, and institutional moments.'
     },
     {
-      value: buildCount(contactItems.length),
+      value: '01',
       label: 'Support Channels',
       detail: 'Direct contact routes for admission queries, calls, and official communication.'
     }
   ];
+  const campusHighlights = site?.homepage?.highlights?.length
+    ? site.homepage.highlights
+        .filter((item) => item?.value || item?.label || item?.detail)
+        .map((item, index) => ({
+          value: String(item.value || '').trim() || defaultCampusHighlights[index]?.value || '00',
+          label: item.label || defaultCampusHighlights[index]?.label || 'Highlight',
+          detail: item.detail || defaultCampusHighlights[index]?.detail || ''
+        }))
+    : defaultCampusHighlights;
+  const facilities = site?.homepage?.facilities?.length ? site.homepage.facilities : defaultFacilityItems;
+  const admissionSteps = site?.homepage?.admissionSteps?.length ? site.homepage.admissionSteps : defaultAdmissionSteps;
+  const testimonials = site?.homepage?.testimonials?.length ? site.homepage.testimonials : defaultTestimonials;
 
   useEffect(() => {
     if (managementProfiles.length <= 1) {
@@ -198,7 +245,7 @@ export const HomePage = () => {
     }
   }, [activeManagementSlide, managementProfiles.length]);
 
-  if (!site) {
+  if ((loadingHome && !data) || !site || !data) {
     return <LoadingScreen />;
   }
 
@@ -235,7 +282,8 @@ export const HomePage = () => {
               <div>
                 {site.hero?.bannerNote ? <span className="hero__eyebrow">{site.hero.bannerNote}</span> : null}
                 <h1>{site.collegeName}</h1>
-                {site.affiliation ? <p className="hero__subtitle">{site.affiliation}</p> : null}
+                {site.location ? <p className="hero__subtitle">{site.location}</p> : null}
+                {site.affiliation ? <p className="hero__subnote">{site.affiliation}</p> : null}
               </div>
             </div>
 
@@ -541,22 +589,29 @@ export const HomePage = () => {
             <SectionHeading
               eyebrow="Gallery"
               title="Campus Life"
-              description="Images from campus activity, academic engagement, and important institutional moments."
+              description="A curated view of campus spaces, academic activities, and important institutional moments."
             />
 
             <div className="gallery-preview gallery-preview--expanded">
-              {galleryPreview.map((item) => (
-                <article key={item._id} className="gallery-preview__item">
-                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.caption || 'Campus gallery item'} loading="lazy" decoding="async" />
-                  {(item.category || item.caption || item.photoOf) ? (
-                    <div className="gallery-preview__caption">
-                      {item.category ? <span className="gallery-card__eyebrow">{item.category}</span> : null}
-                      {item.caption ? <strong>{item.caption}</strong> : null}
-                      {item.photoOf ? <p className="gallery-card__detail">{item.photoOf}</p> : null}
-                    </div>
-                  ) : null}
-                </article>
-              ))}
+              {galleryPreview.map((item, index) => {
+                const galleryCategory = formatDisplayTitle(item.category);
+                const galleryTitle = formatDisplayTitle(item.caption || item.photoOf || `Campus Highlight ${String(index + 1).padStart(2, '0')}`);
+                const galleryDetail =
+                  item.photoOf && formatDisplayTitle(item.photoOf) !== galleryTitle ? String(item.photoOf).trim() : '';
+
+                return (
+                  <article key={item._id} className="gallery-preview__item">
+                    <img src={resolveMediaUrl(item.imageUrl)} alt={galleryTitle || 'Campus gallery item'} loading="lazy" decoding="async" />
+                    {(galleryCategory || galleryTitle || galleryDetail) ? (
+                      <div className="gallery-preview__caption">
+                        {galleryCategory ? <span className="gallery-card__eyebrow">{galleryCategory}</span> : null}
+                        {galleryTitle ? <strong>{galleryTitle}</strong> : null}
+                        {galleryDetail ? <p className="gallery-card__detail">{galleryDetail}</p> : null}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
 
             <div className="section__actions">

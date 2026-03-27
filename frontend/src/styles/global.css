@@ -66,6 +66,17 @@ select {
   color: var(--color-ink);
 }
 
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 textarea {
   resize: vertical;
 }
@@ -524,6 +535,11 @@ thead th {
   margin-top: 0.7rem !important;
 }
 
+.hero__subnote {
+  font-size: 1rem !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
@@ -831,8 +847,6 @@ thead th {
 }
 
 .course-preview-grid,
-.metric-grid,
-.facility-grid,
 .process-grid,
 .experience-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -842,6 +856,12 @@ thead th {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.metric-grid,
+.facility-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 228px));
+  justify-content: center;
+}
+
 .metric-card strong {
   display: block;
   margin-bottom: 0.8rem;
@@ -849,6 +869,11 @@ thead th {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   color: var(--color-maroon);
   line-height: 0.9;
+}
+
+.metric-card,
+.facility-card {
+  min-height: 232px;
 }
 
 .facility-card {
@@ -1018,18 +1043,35 @@ thead th {
 }
 
 .gallery-preview__item {
+  display: grid;
+  grid-template-rows: auto minmax(112px, auto);
   border: 1px solid var(--color-border);
   background: var(--color-white);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
 }
 
 .gallery-preview__item img {
+  display: block;
   width: 100%;
   aspect-ratio: 1 / 0.75;
   object-fit: cover;
 }
 
 .gallery-preview__caption {
-  padding: 1rem;
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.gallery-preview__caption strong {
+  display: block;
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem;
+  line-height: 1.05;
+  color: var(--color-ink);
 }
 
 .motivation-panel {
@@ -1098,6 +1140,15 @@ thead th {
   padding: 1.6rem;
 }
 
+.leadership-carousel__media img {
+  min-height: 220px;
+}
+
+.leadership-carousel__content {
+  gap: 0.6rem;
+  padding: 1.1rem 1.2rem;
+}
+
 .leadership-spotlight__designation {
   margin: 0;
   color: var(--color-maroon);
@@ -1109,6 +1160,8 @@ thead th {
 
 .leadership-carousel {
   overflow: hidden;
+  width: min(100%, 720px);
+  margin: 0 auto;
   border: 1px solid var(--color-border);
   background: var(--color-white);
   box-shadow: var(--shadow-soft);
@@ -1122,8 +1175,8 @@ thead th {
 .leadership-carousel__slide {
   min-width: 100%;
   display: grid;
-  grid-template-columns: minmax(240px, 0.78fr) minmax(0, 1.22fr);
-  min-height: 360px;
+  grid-template-columns: minmax(160px, 0.65fr) minmax(0, 1.35fr);
+  min-height: 220px;
 }
 
 .leadership-carousel__slide--textOnly {
@@ -1191,7 +1244,7 @@ thead th {
 
 .gallery-card__eyebrow {
   display: inline-flex;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0;
   color: var(--color-maroon);
   font-size: 0.78rem;
   font-weight: 700;
@@ -1200,8 +1253,9 @@ thead th {
 }
 
 .gallery-card__detail {
-  margin-top: 0.45rem;
+  margin: 0.15rem 0 0;
   font-size: 0.95rem;
+  line-height: 1.5;
   color: var(--color-ink-soft);
 }
 
