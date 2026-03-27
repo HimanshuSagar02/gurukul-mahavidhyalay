@@ -94,7 +94,7 @@ const existingDefaultHighlightItems = [
 
 const defaultSiteContent = {
   singletonKey: 'site-content',
-  collegeName: 'Gurukul Mahavidyalya',
+  collegeName: 'Gurukul Mahavidhyalya',
   location: 'Khusalpur, District Rampur, Teh. Swar',
   affiliation: 'Guru Jambheshwar University',
   announcementTicker:
@@ -237,7 +237,7 @@ const defaultSiteContent = {
   },
   about: {
     introduction:
-      'Gurukul Mahavidyalya supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
+      'Gurukul Mahavidhyalya supports students in and around Khusalpur with a B.A. course built on learning, values, and confidence.',
     mission: 'To guide students toward strong values, clear thinking, and meaningful growth.',
     vision: 'To be a trusted college known for learning, discipline, and opportunity.',
     principalName: 'Principal',
@@ -255,7 +255,7 @@ const defaultSiteContent = {
     managementProfiles: []
   },
   contact: {
-    address: 'Gurukul Mahavidyalya, Khusalpur, District Rampur, Teh. Swar',
+    address: 'Gurukul Mahavidhyalya, Khusalpur, District Rampur, Teh. Swar',
     phone: '',
     email: '',
     mapEmbedUrl: '',

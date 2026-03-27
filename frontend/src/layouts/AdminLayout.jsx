@@ -22,7 +22,7 @@ export const AdminLayout = () => {
       <aside className="admin-sidebar">
         <div className="admin-sidebar__brand">
           <p>Hidden Admin Panel</p>
-          <strong>Gurukul Mahavidyalya</strong>
+          <strong>Gurukul Mahavidhyalya</strong>
         </div>
         <nav className="admin-sidebar__nav">
           {adminLinks.map((item) => (

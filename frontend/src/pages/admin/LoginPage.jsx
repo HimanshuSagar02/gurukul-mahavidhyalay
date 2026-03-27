@@ -36,7 +36,7 @@ export const LoginPage = () => {
     <div className="login-screen">
       <div className="login-card">
         <span className="login-card__eyebrow">Hidden Admin Access</span>
-        <h1>Gurukul Mahavidyalya</h1>
+        <h1>Gurukul Mahavidhyalya</h1>
         <p>Use direct URL access only. This login is intentionally not exposed in the public website navigation.</p>
 
         <form onSubmit={handleSubmit}>

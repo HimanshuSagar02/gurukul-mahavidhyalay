@@ -56,7 +56,7 @@ const upsertJsonLd = (id, payload) => {
 };
 
 const buildPageSeo = (pathname, site) => {
-  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidhyalya').trim();
   const fullLocation = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
   const brand = shortLocation ? `${collegeName} ${shortLocation}` : collegeName;
@@ -98,7 +98,7 @@ const buildPageSeo = (pathname, site) => {
 };
 
 const buildSeoKeywords = (site) => {
-  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidhyalya').trim();
   const fullLocation = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
   const affiliation = site?.affiliation?.trim();
@@ -112,7 +112,7 @@ const buildSeoKeywords = (site) => {
         'Affiliated with Guru Jambeshwar University Moradabad',
         collegeName,
         `${collegeName} ${shortLocation}`,
-        'Gurukul Mahavidyalya Khusalpur',
+        'Gurukul Mahavidhyalya Khushalpur',
         'Maswasi Gurukul College',
         'Gurukul College Maswasi',
         'BA college in Khushalpur',
@@ -127,7 +127,7 @@ const buildSeoKeywords = (site) => {
 
 const buildStructuredData = (site) => {
   const origin = window.location.origin;
-  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidhyalya').trim();
   const location = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const description = site?.hero?.subheadline?.trim() || site?.hero?.headline?.trim() || `${collegeName} admissions, courses, notices, and contact information.`;
   const logoPath = site?.branding?.websiteLogoUrl?.trim();
@@ -222,7 +222,7 @@ export const PublicLayout = () => {
     upsertMetaTag('name', 'keywords', keywords);
     upsertMetaTag('property', 'og:title', title);
     upsertMetaTag('property', 'og:description', description);
-    upsertMetaTag('property', 'og:site_name', site?.collegeName || 'Gurukul Mahavidyalya');
+    upsertMetaTag('property', 'og:site_name', site?.collegeName || 'Gurukul Mahavidhyalya');
     upsertMetaTag('property', 'og:type', 'website');
     upsertMetaTag('property', 'og:url', canonicalUrl);
     upsertMetaTag('property', 'og:locale', 'en_IN');

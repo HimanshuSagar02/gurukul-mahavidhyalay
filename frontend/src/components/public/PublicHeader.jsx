@@ -37,7 +37,7 @@ export const PublicHeader = ({ site }) => {
             </span>
             <div>
               <p className="brand-header__eyebrow">Official Website</p>
-              <h1>{site?.collegeName || 'Gurukul Mahavidyalya'}</h1>
+              <h1>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h1>
               {site?.location ? <p>{site.location}</p> : null}
               {site?.affiliation ? <p>{site.affiliation}</p> : null}
             </div>

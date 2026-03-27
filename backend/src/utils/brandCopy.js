@@ -16,8 +16,8 @@ export const normalizeCollegeSpelling = (value) => {
   }
 
   return value
-    .replace(/\bMahavidhyalya\b/g, 'Mahavidyalya')
-    .replace(/\bMahavidyalay\b/g, 'Mahavidyalya');
+    .replace(/\bMahavidyalya\b/g, 'Mahavidhyalya')
+    .replace(/\bMahavidyalay\b/g, 'Mahavidhyalya');
 };
 
 export const normalizeAffiliationText = (value) => {
