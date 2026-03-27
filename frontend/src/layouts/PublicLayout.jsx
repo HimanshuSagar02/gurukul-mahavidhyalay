@@ -86,6 +86,30 @@ const buildPageSeo = (pathname, site) => {
   return seoByPath[pathname] || seoByPath['/'];
 };
 
+const buildSeoKeywords = (site) => {
+  const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
+  const fullLocation = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
+  const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
+  const affiliation = site?.affiliation?.trim();
+
+  return Array.from(
+    new Set(
+      [
+        collegeName,
+        `${collegeName} ${shortLocation}`,
+        'Gurukul Mahavidhyalya Khushalpur',
+        'Gurukul Mahavidyalya Khusalpur',
+        'Maswasi Gurukul College',
+        'Gurukul College Maswasi',
+        'BA college in Khushalpur',
+        'BA college near Maswasi',
+        fullLocation,
+        affiliation
+      ].filter(Boolean)
+    )
+  ).join(', ');
+};
+
 const buildStructuredData = (site) => {
   const origin = window.location.origin;
   const collegeName = (site?.collegeName || 'Gurukul Mahavidyalya').trim();
@@ -94,12 +118,15 @@ const buildStructuredData = (site) => {
   const logoPath = site?.branding?.websiteLogoUrl?.trim();
   const contactAddress = site?.contact?.address?.trim() || location;
   const socialLinks = Object.values(site?.socialLinks || {}).filter(Boolean);
+  const keywords = buildSeoKeywords(site);
 
   const organization = {
     '@context': 'https://schema.org',
     '@type': 'CollegeOrUniversity',
     name: collegeName,
+    alternateName: 'Gurukul Mahavidhyalya Khushalpur',
     description,
+    keywords,
     url: origin,
     address: {
       '@type': 'PostalAddress',
@@ -170,14 +197,18 @@ export const PublicLayout = () => {
 
   useEffect(() => {
     const { title, description } = buildPageSeo(location.pathname, site);
+    const keywords = buildSeoKeywords(site);
     const logoPath = site?.branding?.websiteLogoUrl?.trim() || '/logo-mark.svg';
 
     document.title = title;
     upsertMetaTag('name', 'description', description);
+    upsertMetaTag('name', 'keywords', keywords);
     upsertMetaTag('property', 'og:title', title);
     upsertMetaTag('property', 'og:description', description);
+    upsertMetaTag('property', 'og:site_name', site?.collegeName || 'Gurukul Mahavidyalya');
     upsertMetaTag('property', 'og:type', 'website');
     upsertMetaTag('property', 'og:url', window.location.href);
+    upsertMetaTag('name', 'twitter:card', 'summary');
     upsertMetaTag('name', 'twitter:title', title);
     upsertMetaTag('name', 'twitter:description', description);
     upsertLinkTag('icon', logoPath);
