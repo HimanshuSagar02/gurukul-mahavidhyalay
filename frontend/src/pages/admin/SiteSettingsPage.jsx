@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { acceptedImageTypes, api, resolveMediaUrl } from '../../api/client';
 import { LoadingScreen } from '../../components/LoadingScreen';
+import { syncPublicHomeSnapshot, syncPublicSiteSnapshot } from '../../utils/browserCache';
 
 const createFeatureItem = () => ({
   title: '',
@@ -193,6 +194,8 @@ export const SiteSettingsPage = () => {
 
       const response = await api.post('/admin/site/media', payload);
       setForm(mapSiteToForm(response.site));
+      syncPublicSiteSnapshot(response.site);
+      syncPublicHomeSnapshot(response.site);
       setMediaStatus({ error: '', success: 'Image uploaded successfully.', uploading: '' });
     } catch (error) {
       setMediaStatus({ error: error.message, success: '', uploading: '' });
@@ -206,6 +209,8 @@ export const SiteSettingsPage = () => {
     try {
       const response = await api.put('/admin/site/general', form);
       setForm(mapSiteToForm(response));
+      syncPublicSiteSnapshot(response);
+      syncPublicHomeSnapshot(response);
       setStatus({ error: '', success: 'Home page content updated successfully.', saving: false });
     } catch (error) {
       setStatus({ error: error.message, success: '', saving: false });

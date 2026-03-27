@@ -4,9 +4,7 @@ import { api } from '../api/client';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { PublicFooter } from '../components/public/PublicFooter';
 import { PublicHeader } from '../components/public/PublicHeader';
-import { readCachedJson, writeCachedJson } from '../utils/browserCache';
-
-const PUBLIC_SITE_CACHE_KEY = 'gurukul-public-site-cache-v1';
+import { PUBLIC_SITE_CACHE_KEY, readCachedJson, writeCachedJson } from '../utils/browserCache';
 
 const upsertMetaTag = (attribute, key, content) => {
   let tag = document.head.querySelector(`meta[${attribute}="${key}"]`);
@@ -32,6 +30,18 @@ const upsertLinkTag = (rel, href) => {
   tag.setAttribute('href', href);
 };
 
+const upsertCanonicalLink = (href) => {
+  let tag = document.head.querySelector('link[rel="canonical"]');
+
+  if (!tag) {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', 'canonical');
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute('href', href);
+};
+
 const upsertJsonLd = (id, payload) => {
   let script = document.head.querySelector(`script[data-seo-id="${id}"]`);
 
@@ -51,11 +61,12 @@ const buildPageSeo = (pathname, site) => {
   const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
   const brand = shortLocation ? `${collegeName} ${shortLocation}` : collegeName;
   const affiliation = site?.affiliation?.trim();
+  const seoAffiliation = affiliation || 'Guru Jambeshwar University Moradabad';
 
   const seoByPath = {
     '/': {
-      title: `${brand} | BA Admission & Courses`,
-      description: `${collegeName} in ${fullLocation}${affiliation ? ` is affiliated with ${affiliation} and` : ''} offers admission help, B.A. course details, college notices, gallery updates, and contact information.`
+      title: `${brand} | Affiliated with ${seoAffiliation}`,
+      description: `${collegeName} in ${fullLocation} is affiliated with ${seoAffiliation} and offers admission help, B.A. course details, college notices, gallery updates, and contact information.`
     },
     '/about': {
       title: `About ${collegeName} | College Profile & Leadership`,
@@ -91,20 +102,24 @@ const buildSeoKeywords = (site) => {
   const fullLocation = (site?.location || 'Khusalpur, District Rampur, Teh. Swar').trim();
   const shortLocation = fullLocation.split(',')[0]?.trim() || fullLocation;
   const affiliation = site?.affiliation?.trim();
+  const affiliationKeyword = affiliation ? `${affiliation} Moradabad` : 'Guru Jambeshwar University Moradabad';
 
   return Array.from(
     new Set(
       [
+        'Gurukul Mahavidhyalya Khushalpur',
+        'Gurukul Mahavidhyalya Khushalpur affiliated with Guru Jambeshwar University Moradabad',
+        'Affiliated with Guru Jambeshwar University Moradabad',
         collegeName,
         `${collegeName} ${shortLocation}`,
-        'Gurukul Mahavidhyalya Khushalpur',
         'Gurukul Mahavidyalya Khusalpur',
         'Maswasi Gurukul College',
         'Gurukul College Maswasi',
         'BA college in Khushalpur',
         'BA college near Maswasi',
         fullLocation,
-        affiliation
+        affiliation,
+        affiliationKeyword
       ].filter(Boolean)
     )
   ).join(', ');
@@ -127,6 +142,7 @@ const buildStructuredData = (site) => {
     alternateName: 'Gurukul Mahavidhyalya Khushalpur',
     description,
     keywords,
+    slogan: 'Affiliated with Guru Jambeshwar University Moradabad',
     url: origin,
     address: {
       '@type': 'PostalAddress',
@@ -199,6 +215,7 @@ export const PublicLayout = () => {
     const { title, description } = buildPageSeo(location.pathname, site);
     const keywords = buildSeoKeywords(site);
     const logoPath = site?.branding?.websiteLogoUrl?.trim() || '/logo-mark.svg';
+    const canonicalUrl = new URL(location.pathname || '/', window.location.origin).href;
 
     document.title = title;
     upsertMetaTag('name', 'description', description);
@@ -207,11 +224,13 @@ export const PublicLayout = () => {
     upsertMetaTag('property', 'og:description', description);
     upsertMetaTag('property', 'og:site_name', site?.collegeName || 'Gurukul Mahavidyalya');
     upsertMetaTag('property', 'og:type', 'website');
-    upsertMetaTag('property', 'og:url', window.location.href);
+    upsertMetaTag('property', 'og:url', canonicalUrl);
+    upsertMetaTag('property', 'og:locale', 'en_IN');
     upsertMetaTag('name', 'twitter:card', 'summary');
     upsertMetaTag('name', 'twitter:title', title);
     upsertMetaTag('name', 'twitter:description', description);
     upsertLinkTag('icon', logoPath);
+    upsertCanonicalLink(canonicalUrl);
     upsertJsonLd('college-organization', buildStructuredData(site));
   }, [location.pathname, site]);
 

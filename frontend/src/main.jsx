@@ -5,7 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './styles/global.css';
 
-const routerMode = (import.meta.env.VITE_ROUTER_MODE || 'hash').trim().toLowerCase();
+const routerMode = (import.meta.env.VITE_ROUTER_MODE || 'browser').trim().toLowerCase();
 const Router = routerMode === 'browser' ? BrowserRouter : HashRouter;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
