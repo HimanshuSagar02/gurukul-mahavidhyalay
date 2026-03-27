@@ -27,12 +27,14 @@ export const PublicHeader = ({ site }) => {
       <div className="brand-header">
         <div className="container brand-header__inner">
           <Link to="/" className="brand-header__identity">
-            <img
-              src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
-              alt={`${site?.collegeName || 'College'} logo`}
-              className="brand-header__logo"
-              decoding="async"
-            />
+            <span className="brand-header__logo-frame">
+              <img
+                src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
+                alt={`${site?.collegeName || 'College'} logo`}
+                className="brand-header__logo"
+                decoding="async"
+              />
+            </span>
             <div>
               <p className="brand-header__eyebrow">Official Website</p>
               <h1>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h1>

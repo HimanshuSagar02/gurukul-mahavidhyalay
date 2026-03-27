@@ -39,13 +39,15 @@ export const PublicFooter = ({ site }) => {
       <div className="container site-footer__grid">
         <div>
           <div className="site-footer__brand">
-            <img
-              src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
-              alt={`${site?.collegeName || 'College'} logo`}
-              className="site-footer__logo"
-              loading="lazy"
-              decoding="async"
-            />
+            <span className="site-footer__logo-frame">
+              <img
+                src={resolveMediaUrl(site?.branding?.websiteLogoUrl || '/logo-mark.svg')}
+                alt={`${site?.collegeName || 'College'} logo`}
+                className="site-footer__logo"
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
             <h3>{site?.collegeName || 'Gurukul Mahavidhyalya'}</h3>
           </div>
           {site?.affiliation ? <p>{site.affiliation}</p> : null}

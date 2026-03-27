@@ -221,7 +221,7 @@ export const SiteSettingsPage = () => {
             <div className="form-grid__full media-upload-grid media-upload-grid--single">
               <div className="media-upload-card">
                 <span>Website Logo</span>
-                <div className="media-upload-card__preview">
+                <div className="media-upload-card__preview media-upload-card__preview--logo">
                   <img src={resolveMediaUrl(form.branding.websiteLogoUrl)} alt="Website logo preview" />
                 </div>
                 <input

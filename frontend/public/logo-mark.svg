@@ -1,8 +1,26 @@
 <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="12" y="6" width="72" height="84" rx="10" fill="#F7F1E7" stroke="#8A1C2B" stroke-width="4"/>
-  <path d="M48 18L66 26V44C66 58 56 68 48 72C40 68 30 58 30 44V26L48 18Z" fill="#D1A357"/>
-  <path d="M38 36H58" stroke="#14353F" stroke-width="4" stroke-linecap="round"/>
-  <path d="M36 46H60" stroke="#14353F" stroke-width="4" stroke-linecap="round"/>
-  <path d="M40 56H56" stroke="#14353F" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="48" cy="27" r="4" fill="#8A1C2B"/>
+  <defs>
+    <linearGradient id="badgeBg" x1="18" y1="12" x2="78" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17353F"/>
+      <stop offset="1" stop-color="#10262D"/>
+    </linearGradient>
+    <linearGradient id="shieldFill" x1="48" y1="26" x2="48" y2="63" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D5AB61"/>
+      <stop offset="1" stop-color="#B98942"/>
+    </linearGradient>
+  </defs>
+  <circle cx="48" cy="48" r="44" fill="url(#badgeBg)" stroke="#C59F57" stroke-width="4"/>
+  <circle cx="48" cy="48" r="37" fill="#F7F1E7" fill-opacity="0.96"/>
+  <path d="M28.5 62C24.2 56.4 22 50.3 22 43.7C25.2 47.2 27.7 50.8 29.5 54.6" stroke="#8A1C2B" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M31.5 66.5C27.8 62.1 25.6 57.3 24.8 52.1C28.1 54.5 30.9 57.4 33 60.8" stroke="#C59F57" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M67.5 62C71.8 56.4 74 50.3 74 43.7C70.8 47.2 68.3 50.8 66.5 54.6" stroke="#8A1C2B" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M64.5 66.5C68.2 62.1 70.4 57.3 71.2 52.1C67.9 54.5 65.1 57.4 63 60.8" stroke="#C59F57" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M48 24L62.5 30.7V44.4C62.5 53.8 56.3 60.8 48 64.8C39.7 60.8 33.5 53.8 33.5 44.4V30.7L48 24Z" fill="url(#shieldFill)" stroke="#14353F" stroke-width="2.6"/>
+  <circle cx="48" cy="39" r="6.5" fill="#8A1C2B"/>
+  <path d="M48 32.8V45.2" stroke="#F7F1E7" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M41.8 39H54.2" stroke="#F7F1E7" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M35.2 55.5C39.9 52.8 44.2 51.6 48 51.6C51.8 51.6 56.1 52.8 60.8 55.5V61.5C56.4 59.3 52.1 58.2 48 58.2C43.9 58.2 39.6 59.3 35.2 61.5V55.5Z" fill="#F2D7A2" stroke="#8A1C2B" stroke-width="2"/>
+  <path d="M48 51.8V58.3" stroke="#8A1C2B" stroke-width="2" stroke-linecap="round"/>
+  <path d="M39.4 67H56.6" stroke="#14353F" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="48" cy="18" r="2.5" fill="#C59F57"/>
 </svg>
